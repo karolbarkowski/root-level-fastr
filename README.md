@@ -1,97 +1,49 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Fasting Tracker (React Native, bare CLI, TypeScript)
 
-# Getting Started
+A single-view, minimalistic fasting tracker:
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+- Circular 270° gauge with configurable milestone **breakpoints** (`{ hoursIn, icon, effectCode, colorCode }`)
+- Big START button in the center; tapping it begins the fast
+- While fasting: live elapsed timer in the center, the ring greys out behind your progress
+- `−` / `+` stepper to set the target duration (hidden while fasting)
+- Start / Target date-time labels
+- Ending a fast saves it to the device (AsyncStorage) and shows it in the history list below
 
-## Step 1: Start Metro
+## Files
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
-
-To start the Metro dev server, run the following command from the root of your React Native project:
-
-```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+```
+App.tsx                  – screen, state machine, persistence wiring
+src/types.ts             – Breakpoint / RingConfig / FastEntry / ActiveFast
+src/config.ts            – DEFAULT_RING_CONFIG (edit breakpoints here)
+src/FastingRing.tsx      – SVG gauge: color segments, grey elapsed overlay, icon markers
+src/HistoryList.tsx      – completed fasts list
+src/storage.ts           – AsyncStorage helpers
+src/format.ts            – date/duration formatting
 ```
 
-## Step 2: Build and run your app
+## Setup
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+Drop these files into a fresh bare RN project (`npx @react-native-community/cli init FastingTracker --version latest`), replacing the generated `App.tsx`, then:
 
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```bash
+npm install react-native-svg @react-native-async-storage/async-storage
+cd ios && pod install && cd ..   # iOS only
+npm run ios    # or: npm run android
 ```
 
-### iOS
+Both libraries autolink — no manual native config needed.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+## How the ring works
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+- The gauge sweeps 270°, gap at the bottom (start = 135°, clockwise).
+- `t = hoursIn / totalHours` maps a breakpoint onto the arc.
+- Segments are colored `baseColor` → first breakpoint's `colorCode` → next, etc.
+- Icon markers are plain absolutely-positioned `View`s (emoji render reliably this way on both platforms, unlike SVG `<Text>`).
+- While running, a grey arc is drawn on top from `t=0` to `t=elapsed/total`.
+- `effectCode` is carried in the model but unused for now — wire it to haptics/notifications later.
 
-```sh
-bundle install
-```
+## Notes / possible next steps
 
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- An active fast survives app restarts (persisted under `fasting:active`).
+- If you change the target while idle, breakpoints past `totalHours` are simply not rendered.
+- Easy additions: long-press a history row to delete, local notification when a breakpoint is reached (that's what `effectCode` is for), editable start time.
