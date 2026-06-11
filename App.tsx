@@ -24,16 +24,19 @@ import {
   saveActiveFast,
   saveHistory,
 } from './src/storage';
-import { formatDay, formatElapsed, formatTime } from './src/format';
+import { formatElapsed } from './src/format';
 
 import FastingRing from './src/FastingRing';
 import HistoryList from './src/HistoryList';
+import SoftCard from './src/SoftCard';
+import { colors } from './src/theme';
 
 const HOUR_MS = 3600_000;
 
 export default function App() {
   const { width } = useWindowDimensions();
-  const ringSize = Math.min(width - 32, 380);
+  const ringSize = Math.min(width - 40, 380);
+  const buttonSize = Math.round(ringSize * 0.62);
 
   const [targetHours, setTargetHours] = useState(DEFAULT_TARGET_HOURS);
   const [activeFast, setActiveFast] = useState<ActiveFast | null>(null);
@@ -66,8 +69,6 @@ export default function App() {
   }, [activeFast]);
 
   const isRunning = activeFast !== null;
-  const startMs = isRunning ? activeFast.startedAt : now;
-  const targetMs = startMs + targetHours * HOUR_MS;
   const elapsedMs = isRunning ? now - activeFast.startedAt : 0;
   const elapsedHours = elapsedMs / HOUR_MS;
 
@@ -113,7 +114,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Wordmark */}
         <View style={styles.header}>
@@ -130,53 +131,74 @@ export default function App() {
           config={ringConfig}
         >
           {isRunning ? (
-            <Pressable
-              style={[styles.centerButton, styles.centerButtonRunning]}
-              onPress={endFast}
+            <SoftCard
+              contentStyle={[
+                styles.centerButton,
+                { width: buttonSize, height: buttonSize },
+              ]}
+              radius={buttonSize / 2}
+              distance={9}
+              blur={18}
+              surfaceColor={colors.accentDark}
             >
-              <Text style={styles.elapsedLabel}>FASTING</Text>
-              <Text style={styles.elapsedTime}>{formatElapsed(elapsedMs)}</Text>
-              <Text style={styles.endHint}>tap to end</Text>
-            </Pressable>
+              <Pressable style={styles.centerPressable} onPress={endFast}>
+                <Text style={styles.elapsedLabel}>FASTING</Text>
+                <Text style={styles.elapsedTime}>
+                  {formatElapsed(elapsedMs)}
+                </Text>
+                <Text style={styles.endHint}>tap to end</Text>
+              </Pressable>
+            </SoftCard>
           ) : (
-            <Pressable style={styles.centerButton} onPress={startFast}>
-              <Text style={styles.startText}>START</Text>
-            </Pressable>
+            <SoftCard
+              contentStyle={[
+                styles.centerButton,
+                { width: buttonSize, height: buttonSize },
+              ]}
+              radius={buttonSize / 2}
+              distance={9}
+              blur={18}
+              surfaceColor={colors.accent}
+            >
+              <Pressable style={styles.centerPressable} onPress={startFast}>
+                <Text style={styles.startText}>START</Text>
+              </Pressable>
+            </SoftCard>
           )}
         </FastingRing>
 
         {/* Duration stepper — hidden while fasting */}
         {!isRunning && (
           <View style={styles.stepper}>
-            <Pressable
-              style={styles.stepperButton}
-              onPress={() => adjustHours(-1)}
+            <SoftCard
+              contentStyle={styles.stepperButton}
+              radius={27}
+              distance={5}
+              blur={11}
             >
-              <Text style={styles.stepperSign}>−</Text>
-            </Pressable>
+              <Pressable
+                style={styles.stepperPressable}
+                onPress={() => adjustHours(-1)}
+              >
+                <Text style={styles.stepperSign}>−</Text>
+              </Pressable>
+            </SoftCard>
             <Text style={styles.stepperValue}>{targetHours} hrs</Text>
-            <Pressable
-              style={styles.stepperButton}
-              onPress={() => adjustHours(1)}
+            <SoftCard
+              contentStyle={styles.stepperButton}
+              radius={27}
+              distance={5}
+              blur={11}
             >
-              <Text style={styles.stepperSign}>+</Text>
-            </Pressable>
+              <Pressable
+                style={styles.stepperPressable}
+                onPress={() => adjustHours(1)}
+              >
+                <Text style={styles.stepperSign}>+</Text>
+              </Pressable>
+            </SoftCard>
           </View>
         )}
-
-        {/* Start / target times */}
-        <View style={styles.timesRow}>
-          <View style={styles.timeBlock}>
-            <Text style={styles.timeLabel}>Start</Text>
-            <Text style={styles.timeValue}>{formatDay(startMs)}</Text>
-            <Text style={styles.timeValue}>{formatTime(startMs)}</Text>
-          </View>
-          <View style={styles.timeBlock}>
-            <Text style={styles.timeLabel}>Target</Text>
-            <Text style={styles.timeValue}>{formatDay(targetMs)}</Text>
-            <Text style={styles.timeValue}>{formatTime(targetMs)}</Text>
-          </View>
-        </View>
 
         <HistoryList entries={history} />
       </ScrollView>
@@ -187,7 +209,7 @@ export default function App() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: colors.bg,
   },
   scroll: {
     alignItems: 'center',
@@ -197,36 +219,35 @@ const styles = StyleSheet.create({
   header: {
     width: '100%',
     alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 40,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   logo: {
     fontSize: 34,
     fontWeight: '800',
     letterSpacing: 0.5,
-    color: '#1C1C1E',
+    color: colors.textPrimary,
   },
   logoAccent: {
-    color: '#34B3E8',
+    color: colors.accent,
   },
   tagline: {
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
-    color: '#8E8E93',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   centerButton: {
-    width: '62%',
-    aspectRatio: 1,
-    borderRadius: 999,
-    backgroundColor: '#62C4F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  centerButtonRunning: {
-    backgroundColor: '#4FB6E6',
+  centerPressable: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   startText: {
     color: '#FFFFFF',
@@ -254,55 +275,32 @@ const styles = StyleSheet.create({
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: -28, // tucks into the ring's bottom gap, like the screenshot
+    marginTop: -24, // tucks into the ring's bottom gap
     marginBottom: 8,
   },
   stepperButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1.5,
-    borderColor: '#1C1C1E',
+    width: 54,
+    height: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperPressable: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepperSign: {
-    fontSize: 22,
-    lineHeight: 24,
-    color: '#1C1C1E',
+    fontSize: 26,
+    lineHeight: 28,
+    fontWeight: '600',
+    color: colors.textPrimary,
   },
   stepperValue: {
     fontSize: 26,
-    fontWeight: '500',
-    color: '#1C1C1E',
-    marginHorizontal: 16,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginHorizontal: 24,
     fontVariant: ['tabular-nums'],
-  },
-  timesRow: {
-    flexDirection: 'row',
-    width: '100%',
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  timeBlock: {
-    flex: 1,
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    paddingVertical: 14,
-    marginHorizontal: 6,
-  },
-  timeLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: '#8E8E93',
-    marginBottom: 6,
-  },
-  timeValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1C1C1E',
   },
 });

@@ -1,6 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { formatDay, formatDurationShort, formatTime } from './format';
+import { formatDay, formatTime } from './format';
+import SoftCard from './SoftCard';
+import { colors } from './theme';
 import { FastEntry } from './types';
 
 interface Props {
@@ -8,77 +10,101 @@ interface Props {
 }
 
 export default function HistoryList({ entries }: Props) {
-  if (entries.length === 0) {
-    return <Text style={styles.empty}>No completed fasts yet.</Text>;
-  }
+  // Bars are sized relative to the longest fast on record, so the list reads
+  // comparatively at a glance.
+  const maxMs = entries.reduce((m, e) => Math.max(m, e.endedAt - e.startedAt), 0);
 
   return (
-    <View style={styles.container}>
+    <SoftCard style={styles.card} contentStyle={styles.cardContent} radius={20} stretch>
       <Text style={styles.heading}>History</Text>
-      {entries.map(entry => {
-        const actualMs = entry.endedAt - entry.startedAt;
-        const targetMs = entry.targetHours * 3600_000;
-        const reached = actualMs >= targetMs;
-        return (
-          <View key={entry.id} style={styles.row}>
-            <View style={styles.rowLeft}>
-              <Text style={styles.rowTitle}>
-                {formatDay(entry.startedAt)}, {formatTime(entry.startedAt)} →{' '}
-                {formatDay(entry.endedAt)}, {formatTime(entry.endedAt)}
+
+      {entries.length === 0 ? (
+        <Text style={styles.empty}>No completed fasts yet.</Text>
+      ) : (
+        entries.map((entry, i) => {
+          const actualMs = entry.endedAt - entry.startedAt;
+          const frac = maxMs > 0 ? actualMs / maxMs : 0;
+          const totalMin = Math.max(0, Math.floor(actualMs / 60000));
+          const durationLabel = `${Math.floor(totalMin / 60)}h ${totalMin % 60}m`;
+          return (
+            <View key={entry.id} style={[styles.row, i > 0 && styles.rowDivider]}>
+              <Text style={styles.date} numberOfLines={1}>
+                {formatDay(entry.startedAt)}, {formatTime(entry.startedAt)}
               </Text>
-              <Text style={styles.rowSub}>
-                {formatDurationShort(actualMs)} of {entry.targetHours}h target
-              </Text>
+              <Text style={styles.arrow}>→</Text>
+              <Text style={styles.duration}>{durationLabel}</Text>
+
+              <View style={styles.spacer} />
+
+              <View style={styles.barTrack}>
+                <View style={[styles.barFill, { width: `${Math.max(frac * 100, 6)}%` }]} />
+              </View>
             </View>
-            <Text style={styles.rowBadge}>{reached ? '✅' : '🏳️'}</Text>
-          </View>
-        );
-      })}
-    </View>
+          );
+        })
+      )}
+    </SoftCard>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    paddingHorizontal: 6,
-    paddingBottom: 32,
+  card: {
+    alignSelf: 'stretch',
+    marginBottom: 32,
+  },
+  cardContent: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   heading: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#1C1C1E',
-    marginBottom: 8,
+    color: colors.textPrimary,
+    marginTop: 8,
+    marginBottom: 2,
   },
   empty: {
-    color: '#8E8E93',
+    color: colors.textSecondary,
     fontSize: 14,
-    paddingBottom: 32,
+    paddingVertical: 12,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    marginBottom: 8,
+    paddingVertical: 13,
   },
-  rowLeft: {
-    flex: 1,
+  rowDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(120,140,170,0.22)',
   },
-  rowTitle: {
+  date: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#1C1C1E',
+    color: colors.textPrimary,
+    flexShrink: 1,
   },
-  rowSub: {
-    fontSize: 12,
-    color: '#8E8E93',
-    marginTop: 2,
+  arrow: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginHorizontal: 8,
   },
-  rowBadge: {
-    fontSize: 16,
-    marginLeft: 8,
+  duration: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
+  spacer: {
+    flex: 1,
+    minWidth: 12,
+  },
+  barTrack: {
+    width: 56,
+    height: 8,
+    alignItems: 'flex-end',
+  },
+  barFill: {
+    height: '100%',
+    backgroundColor: colors.accent,
   },
 });
