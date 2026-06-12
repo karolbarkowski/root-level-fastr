@@ -31,7 +31,7 @@ export default function SoftCard({
   style,
   contentStyle,
   radius = 20,
-  distance = 6,
+  distance = 4,
   blur = 12,
   stretch = false,
   surfaceColor = colors.surface,

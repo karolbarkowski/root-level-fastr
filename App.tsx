@@ -2,9 +2,6 @@ import { ActiveFast, FastEntry } from './src/types';
 import {
   Alert,
   Pressable,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -24,19 +21,19 @@ import {
   saveActiveFast,
   saveHistory,
 } from './src/storage';
-import { formatElapsed } from './src/format';
 
+import DigitalNumber from './src/DigitalNumber';
 import FastingRing from './src/FastingRing';
-import HistoryList from './src/HistoryList';
 import SoftCard from './src/SoftCard';
 import { colors } from './src/theme';
+import { formatElapsed } from './src/format';
 
 const HOUR_MS = 3600_000;
 
 export default function App() {
   const { width } = useWindowDimensions();
   const ringSize = Math.min(width - 40, 380);
-  const buttonSize = Math.round(ringSize * 0.62);
+  const buttonSize = Math.round(ringSize * 0.7);
 
   const [targetHours, setTargetHours] = useState(DEFAULT_TARGET_HOURS);
   const [activeFast, setActiveFast] = useState<ActiveFast | null>(null);
@@ -113,34 +110,35 @@ export default function App() {
   const ringConfig = useMemo(() => DEFAULT_RING_CONFIG, []);
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Wordmark */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>
-            Fast<Text style={styles.logoAccent}>R</Text>
-          </Text>
-          <Text style={styles.tagline}>Track your fast</Text>
-        </View>
+    <View style={styles.root}>
+      {/* Wordmark */}
+      <View style={styles.header}>
+        <Text style={styles.logo}>FastR</Text>
+        <Text style={styles.tagline}>Track your fast</Text>
+      </View>
 
+      <View style={styles.main}>
         <FastingRing
           size={ringSize}
           totalHours={targetHours}
           elapsedHours={elapsedHours}
           config={ringConfig}
         >
-          {isRunning ? (
-            <SoftCard
-              contentStyle={[
-                styles.centerButton,
-                { width: buttonSize, height: buttonSize },
-              ]}
-              radius={buttonSize / 2}
-              distance={9}
-              blur={18}
-              surfaceColor={colors.accentDark}
-            >
+          <SoftCard
+            contentStyle={[
+              styles.centerButton,
+              { width: buttonSize, height: buttonSize },
+            ]}
+            radius={buttonSize / 2}
+            distance={6}
+          >
+            {!isRunning && (
+              <Pressable style={styles.centerPressable} onPress={startFast}>
+                <Text style={styles.startText}>START</Text>
+              </Pressable>
+            )}
+
+            {isRunning && (
               <Pressable style={styles.centerPressable} onPress={endFast}>
                 <Text style={styles.elapsedLabel}>FASTING</Text>
                 <Text style={styles.elapsedTime}>
@@ -148,88 +146,67 @@ export default function App() {
                 </Text>
                 <Text style={styles.endHint}>tap to end</Text>
               </Pressable>
-            </SoftCard>
-          ) : (
-            <SoftCard
-              contentStyle={[
-                styles.centerButton,
-                { width: buttonSize, height: buttonSize },
-              ]}
-              radius={buttonSize / 2}
-              distance={9}
-              blur={18}
-              surfaceColor={colors.accent}
-            >
-              <Pressable style={styles.centerPressable} onPress={startFast}>
-                <Text style={styles.startText}>START</Text>
-              </Pressable>
-            </SoftCard>
-          )}
+            )}
+          </SoftCard>
         </FastingRing>
 
-        {/* Duration stepper — hidden while fasting */}
-        {!isRunning && (
-          <View style={styles.stepper}>
-            <SoftCard
-              contentStyle={styles.stepperButton}
-              radius={27}
-              distance={5}
-              blur={11}
-            >
-              <Pressable
-                style={styles.stepperPressable}
-                onPress={() => adjustHours(-1)}
-              >
-                <Text style={styles.stepperSign}>−</Text>
-              </Pressable>
-            </SoftCard>
-            <Text style={styles.stepperValue}>{targetHours} hrs</Text>
-            <SoftCard
-              contentStyle={styles.stepperButton}
-              radius={27}
-              distance={5}
-              blur={11}
-            >
-              <Pressable
-                style={styles.stepperPressable}
-                onPress={() => adjustHours(1)}
-              >
-                <Text style={styles.stepperSign}>+</Text>
-              </Pressable>
-            </SoftCard>
-          </View>
-        )}
+        {/* Duration stepper — flat, hidden while fasting */}
+        <View style={styles.stepper}>
+          <Pressable
+            style={styles.stepperButton}
+            hitSlop={8}
+            onPress={() => adjustHours(-1)}
+          >
+            <Text style={styles.stepperSign}>−</Text>
+          </Pressable>
+          <DigitalNumber value={targetHours} width={90} />
+          {/* <Text style={styles.stepperValue}>{targetHours} hrs</Text> */}
+          <Pressable
+            style={styles.stepperButton}
+            hitSlop={8}
+            onPress={() => adjustHours(1)}
+          >
+            <Text style={styles.stepperSign}>+</Text>
+          </Pressable>
+        </View>
+      </View>
 
+      {/* <View style={styles.footer}>
         <HistoryList entries={history} />
-      </ScrollView>
-    </SafeAreaView>
+      </View> */}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
+  root: {
     flex: 1,
+    justifyContent: 'space-between',
     backgroundColor: colors.bg,
-  },
-  scroll: {
-    alignItems: 'center',
-    paddingTop: 8,
     paddingHorizontal: 20,
   },
+
   header: {
     width: '100%',
     alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 16,
+    marginTop: 68,
   },
+  main: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 0,
+  },
+
   logo: {
     fontSize: 34,
     fontWeight: '800',
     letterSpacing: 0.5,
     color: colors.textPrimary,
-  },
-  logoAccent: {
-    color: colors.accent,
   },
   tagline: {
     fontSize: 13,
@@ -250,26 +227,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   startText: {
-    color: '#FFFFFF',
-    fontSize: 36,
-    fontWeight: '800',
-    letterSpacing: 1,
+    color: colors.textPrimary,
+    fontSize: 34,
+    fontWeight: '700',
+    letterSpacing: 4,
   },
   elapsedLabel: {
-    color: 'rgba(255,255,255,0.85)',
+    color: colors.textSecondary,
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 2,
   },
   elapsedTime: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 32,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
     marginVertical: 2,
   },
   endHint: {
-    color: 'rgba(255,255,255,0.8)',
+    color: colors.textSecondary,
     fontSize: 12,
   },
   stepper: {
@@ -279,22 +256,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   stepperButton: {
-    width: 54,
-    height: 54,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepperPressable: {
-    width: '100%',
-    height: '100%',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepperSign: {
-    fontSize: 26,
-    lineHeight: 28,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    fontSize: 30,
+    lineHeight: 32,
+    fontWeight: '300',
+    color: colors.textSecondary,
   },
   stepperValue: {
     fontSize: 26,

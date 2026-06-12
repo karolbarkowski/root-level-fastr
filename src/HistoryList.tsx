@@ -1,9 +1,9 @@
-import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { formatDay, formatTime } from './format';
-import SoftCard from './SoftCard';
-import { colors } from './theme';
+
 import { FastEntry } from './types';
+import React from 'react';
+import { colors } from './theme';
 
 interface Props {
   entries: FastEntry[];
@@ -12,10 +12,13 @@ interface Props {
 export default function HistoryList({ entries }: Props) {
   // Bars are sized relative to the longest fast on record, so the list reads
   // comparatively at a glance.
-  const maxMs = entries.reduce((m, e) => Math.max(m, e.endedAt - e.startedAt), 0);
+  const maxMs = entries.reduce(
+    (m, e) => Math.max(m, e.endedAt - e.startedAt),
+    0,
+  );
 
   return (
-    <SoftCard style={styles.card} contentStyle={styles.cardContent} radius={20} stretch>
+    <View style={styles.card}>
       <Text style={styles.heading}>History</Text>
 
       {entries.length === 0 ? (
@@ -25,9 +28,14 @@ export default function HistoryList({ entries }: Props) {
           const actualMs = entry.endedAt - entry.startedAt;
           const frac = maxMs > 0 ? actualMs / maxMs : 0;
           const totalMin = Math.max(0, Math.floor(actualMs / 60000));
-          const durationLabel = `${Math.floor(totalMin / 60)}h ${totalMin % 60}m`;
+          const durationLabel = `${Math.floor(totalMin / 60)}h ${
+            totalMin % 60
+          }m`;
           return (
-            <View key={entry.id} style={[styles.row, i > 0 && styles.rowDivider]}>
+            <View
+              key={entry.id}
+              style={[styles.row, i > 0 && styles.rowDivider]}
+            >
               <Text style={styles.date} numberOfLines={1}>
                 {formatDay(entry.startedAt)}, {formatTime(entry.startedAt)}
               </Text>
@@ -37,13 +45,18 @@ export default function HistoryList({ entries }: Props) {
               <View style={styles.spacer} />
 
               <View style={styles.barTrack}>
-                <View style={[styles.barFill, { width: `${Math.max(frac * 100, 6)}%` }]} />
+                <View
+                  style={[
+                    styles.barFill,
+                    { width: `${Math.max(frac * 100, 6)}%` },
+                  ]}
+                />
               </View>
             </View>
           );
         })
       )}
-    </SoftCard>
+    </View>
   );
 }
 
@@ -100,7 +113,7 @@ const styles = StyleSheet.create({
   },
   barTrack: {
     width: 56,
-    height: 8,
+    height: 4,
     alignItems: 'flex-end',
   },
   barFill: {

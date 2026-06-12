@@ -1,18 +1,18 @@
 import React, { ReactNode, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Line } from 'react-native-svg';
 
 import { RingConfig } from './types';
+import { colors } from './theme';
 
 interface Props {
   size: number;
-  strokeWidth?: number;
-  /** Total length of the fast in hours (full ring sweep). */
+  /** Total length of the fast in hours (full gauge sweep). */
   totalHours: number;
-  /** Hours elapsed so far; the corresponding portion is greyed out. 0 when idle. */
+  /** Hours elapsed so far; ticks up to this point are "lit". 0 when idle. */
   elapsedHours: number;
   config: RingConfig;
-  /** Rendered centered inside the ring (START button / timer). */
+  /** Rendered centered inside the gauge (the disc / timer). */
   children?: ReactNode;
 }
 
@@ -21,29 +21,21 @@ interface Props {
 const START_ANGLE = 135;
 const SWEEP = 270;
 
-function pointAt(cx: number, cy: number, r: number, t: number) {
-  const rad = ((START_ANGLE + SWEEP * t) * Math.PI) / 180;
+const TICK_COUNT = 135; // fine ticks around the dial
+const TICK_LEN = 12;
+const TICK_WIDTH = 1;
+const OUTER_INSET = 6; // gap from the canvas edge to the tick tips
+const HEAD_LEN = 22; // current-position marker
+const HEAD_WIDTH = 3.5;
+const MARKER_SIZE = 30; // milestone icon chips
+
+function polar(cx: number, cy: number, r: number, deg: number) {
+  const rad = (deg * Math.PI) / 180;
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
-function arcPath(cx: number, cy: number, r: number, t0: number, t1: number) {
-  const p0 = pointAt(cx, cy, r, t0);
-  const p1 = pointAt(cx, cy, r, t1);
-  const largeArc = (t1 - t0) * SWEEP > 180 ? 1 : 0;
-  return `M ${p0.x} ${p0.y} A ${r} ${r} 0 ${largeArc} 1 ${p1.x} ${p1.y}`;
-}
-
-interface Segment {
-  t0: number;
-  t1: number;
-  color: string;
-}
-
-const MARKER_SIZE = 36;
-
 export default function FastingRing({
   size,
-  strokeWidth = 12,
   totalHours,
   elapsedHours,
   config,
@@ -51,101 +43,82 @@ export default function FastingRing({
 }: Props) {
   const cx = size / 2;
   const cy = size / 2;
-  const r = (size - MARKER_SIZE) / 2; // leave room for icon markers on the stroke
+  const rOuter = size / 2 - OUTER_INSET;
+  const rMarker = size / 2 - MARKER_SIZE / 2 - 4; // icon chips ride the tick band
 
-  const breakpoints = useMemo(
+  const progress = Math.min(Math.max(elapsedHours / totalHours, 0), 1);
+
+  const milestones = useMemo(
     () =>
-      [...config.breakpoints]
+      config.breakpoints
         .filter(bp => bp.hoursIn > 0 && bp.hoursIn < totalHours)
-        .sort((a, b) => a.hoursIn - b.hoursIn),
+        .sort((a, b) => a.hoursIn - b.hoursIn)
+        .map(bp => ({ ...bp, frac: bp.hoursIn / totalHours })),
     [config.breakpoints, totalHours],
   );
 
-  // Color segments: baseColor until the first breakpoint, then each
-  // breakpoint's colorCode until the next one (or the end of the ring).
-  const segments = useMemo<Segment[]>(() => {
-    const out: Segment[] = [];
-    let cursorT = 0;
-    let color = config.baseColor;
-    for (const bp of breakpoints) {
-      const t = bp.hoursIn / totalHours;
-      if (t > cursorT) {
-        out.push({ t0: cursorT, t1: t, color });
-      }
-      cursorT = t;
-      color = bp.colorCode;
+  // Evenly spaced gauge ticks; the elapsed portion is "lit".
+  const ticks = useMemo(() => {
+    const out = [];
+    for (let i = 0; i < TICK_COUNT; i++) {
+      const t = i / (TICK_COUNT - 1);
+      const deg = START_ANGLE + SWEEP * t;
+      const lit = t <= progress + 1e-6;
+      const p1 = polar(cx, cy, rOuter - TICK_LEN, deg);
+      const p2 = polar(cx, cy, rOuter, deg);
+      out.push(
+        <Line
+          key={`t-${i}`}
+          x1={p1.x}
+          y1={p1.y}
+          x2={p2.x}
+          y2={p2.y}
+          stroke={lit ? colors.ringProgress : colors.ringTrack}
+          strokeWidth={TICK_WIDTH}
+          strokeLinecap="round"
+        />,
+      );
     }
-    out.push({ t0: cursorT, t1: 1, color });
     return out;
-  }, [breakpoints, config.baseColor, totalHours]);
+  }, [cx, cy, rOuter, progress]);
 
-  const progressT = Math.min(Math.max(elapsedHours / totalHours, 0), 1);
-
-  const startCap = pointAt(cx, cy, r, 0);
-  const endCap = pointAt(cx, cy, r, 1);
-  const headCap = pointAt(cx, cy, r, progressT);
+  // Brighter marker at the current position while a fast is running.
+  let head = null;
+  if (progress > 0 && progress < 1) {
+    const deg = START_ANGLE + SWEEP * progress;
+    const p1 = polar(cx, cy, rOuter - HEAD_LEN, deg);
+    const p2 = polar(cx, cy, rOuter + 1, deg);
+    head = (
+      <Line
+        x1={p1.x}
+        y1={p1.y}
+        x2={p2.x}
+        y2={p2.y}
+        stroke={colors.ringHead}
+        strokeWidth={HEAD_WIDTH}
+        strokeLinecap="round"
+      />
+    );
+  }
 
   return (
     <View style={{ width: size, height: size }}>
       <Svg width={size} height={size}>
-        {/* Colored milestone segments */}
-        {segments.map((seg, i) => (
-          <Path
-            key={`seg-${i}`}
-            d={arcPath(cx, cy, r, seg.t0, seg.t1)}
-            stroke={seg.color}
-            strokeWidth={strokeWidth}
-            strokeLinecap="butt"
-            fill="none"
-          />
-        ))}
-        {/* Rounded ring ends */}
-        <Circle
-          cx={startCap.x}
-          cy={startCap.y}
-          r={strokeWidth / 2}
-          fill={segments[0].color}
-        />
-        <Circle
-          cx={endCap.x}
-          cy={endCap.y}
-          r={strokeWidth / 2}
-          fill={segments[segments.length - 1].color}
-        />
-        {/* Grey overlay for elapsed time */}
-        {progressT > 0 && (
-          <>
-            <Path
-              d={arcPath(cx, cy, r, 0, progressT)}
-              stroke={config.elapsedColor}
-              strokeWidth={strokeWidth}
-              strokeLinecap="butt"
-              fill="none"
-            />
-            <Circle
-              cx={startCap.x}
-              cy={startCap.y}
-              r={strokeWidth / 2}
-              fill={config.elapsedColor}
-            />
-            <Circle
-              cx={headCap.x}
-              cy={headCap.y}
-              r={strokeWidth / 2}
-              fill={config.elapsedColor}
-            />
-          </>
-        )}
+        {ticks}
+        {head}
       </Svg>
 
-      {/* Breakpoint icon markers (plain Views so emoji render reliably) */}
-      {breakpoints.map((bp, i) => {
-        const p = pointAt(cx, cy, r, bp.hoursIn / totalHours);
+      {/* Milestone icon chips, seated on the tick band */}
+      {milestones.map((bp, i) => {
+        const deg = START_ANGLE + SWEEP * bp.frac;
+        const p = polar(cx, cy, rMarker, deg);
+        const reached = bp.frac <= progress + 1e-6;
         return (
           <View
             key={`bp-${i}`}
             style={[
               styles.marker,
+              reached && styles.markerReached,
               { left: p.x - MARKER_SIZE / 2, top: p.y - MARKER_SIZE / 2 },
             ]}
           >
@@ -171,14 +144,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#F4F7FB',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#9AA9C0',
-    shadowOpacity: 0.55,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 3 },
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    shadowColor: '#8294B0',
+    shadowOpacity: 0.45,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
+  markerReached: {
+    borderColor: colors.ringHead,
+    backgroundColor: '#EAF6FD',
+  },
   markerIcon: {
-    fontSize: 17,
+    fontSize: 15,
   },
   center: {
     position: 'absolute',
