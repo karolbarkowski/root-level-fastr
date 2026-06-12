@@ -1,7 +1,6 @@
 import { ActiveFast, FastEntry } from './src/types';
 import {
   Alert,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -150,6 +149,7 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  // Layout
   root: {
     flex: 1,
     justifyContent: 'space-between',
@@ -157,8 +157,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 80,
   },
-
-  // Layout
   header: {
     width: '100%',
     alignItems: 'center',
@@ -202,22 +200,6 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
-  centerButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerPressable: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  startText: {
-    color: colors.textPrimary,
-    fontSize: 34,
-    fontWeight: '700',
-    letterSpacing: 4,
-  },
   elapsedLabel: {
     color: colors.textSecondary,
     fontSize: 13,
@@ -234,25 +216,5 @@ const styles = StyleSheet.create({
   endHint: {
     color: colors.textSecondary,
     fontSize: 12,
-  },
-
-  stepperButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepperSign: {
-    fontSize: 30,
-    lineHeight: 32,
-    fontWeight: '300',
-    color: colors.textSecondary,
-  },
-  stepperValue: {
-    fontSize: 26,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginHorizontal: 24,
-    fontVariant: ['tabular-nums'],
   },
 });
