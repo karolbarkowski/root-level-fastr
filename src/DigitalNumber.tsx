@@ -9,7 +9,7 @@ type Segment = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g';
 const HALF = 5; // half the segment thickness
 const TAPER = 7; // length of the angled tip
 const XL = 10; // left vertical centerline
-const XR = 66; // right vertical centerline
+const XR = 60; // right vertical centerline
 const YT = 7; // top horizontal centerline
 const YM = 48; // middle horizontal centerline
 const YB = 89; // bottom horizontal centerline
@@ -108,7 +108,7 @@ export default function DigitalDisplay({
   const ones = number % 10;
 
   return (
-    <Svg width={width} height={height} viewBox="0 0 160 100">
+    <Svg width={width} height={height} viewBox="0 0 140 100">
       <SevenSegmentDigit
         digit={tens}
         x={0}
@@ -118,7 +118,7 @@ export default function DigitalDisplay({
 
       <SevenSegmentDigit
         digit={ones}
-        x={84}
+        x={70}
         activeColor={colors.accent}
         inactiveColor={inactiveColor}
       />
