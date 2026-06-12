@@ -1,8 +1,11 @@
+import type { FC } from 'react';
+import type { SvgProps } from 'react-native-svg';
+
 export interface Breakpoint {
   /** Hours from the start of the fast at which this milestone occurs. */
   hoursIn: number;
-  /** Icon rendered as a marker on the ring (emoji works out of the box). */
-  icon: string;
+  /** SVG component rendered as a marker chip on the ring. */
+  icon: FC<SvgProps>;
   /** Reserved for future use (haptics / animations / notifications). */
   effectCode: string;
   /** Ring stroke color used from this point onwards. */

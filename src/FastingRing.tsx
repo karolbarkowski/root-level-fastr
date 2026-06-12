@@ -1,5 +1,5 @@
 import React, { ReactNode, useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 
 import { RingConfig } from './types';
@@ -28,6 +28,7 @@ const OUTER_INSET = 18; // gap from the canvas edge to the tick tips (room for i
 const HEAD_LEN = 22; // current-position marker
 const HEAD_WIDTH = 3.5;
 const MARKER_SIZE = 30; // milestone icon chips
+const MARKER_ICON_SIZE = 18; // svg glyph inside each chip
 
 function polar(cx: number, cy: number, r: number, deg: number) {
   const rad = (deg * Math.PI) / 180;
@@ -113,6 +114,7 @@ export default function FastingRing({
         const deg = START_ANGLE + SWEEP * bp.frac;
         const p = polar(cx, cy, rMarker, deg);
         const reached = bp.frac <= progress + 1e-6;
+        const Icon = bp.icon;
         return (
           <View
             key={`bp-${i}`}
@@ -122,7 +124,7 @@ export default function FastingRing({
               { left: p.x - MARKER_SIZE / 2, top: p.y - MARKER_SIZE / 2 },
             ]}
           >
-            <Text style={styles.markerIcon}>{bp.icon}</Text>
+            <Icon width={MARKER_ICON_SIZE} height={MARKER_ICON_SIZE} />
           </View>
         );
       })}
@@ -155,9 +157,6 @@ const styles = StyleSheet.create({
   markerReached: {
     borderColor: colors.ringHead,
     backgroundColor: '#EAF6FD',
-  },
-  markerIcon: {
-    fontSize: 15,
   },
   center: {
     position: 'absolute',
