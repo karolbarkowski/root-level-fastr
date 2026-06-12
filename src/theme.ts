@@ -10,7 +10,7 @@ export const colors = {
   surface: '#EAF0F8', // raised card / button face
   shadowDark: '#B7C3D8', // bottom-right drop shadow
   shadowLight: '#f3f6fa', // top-left highlight
-  textPrimary: '#717984',
+  textPrimary: '#808B98',
   textSecondary: '#bdc3d3',
   accent: '#46a2cd',
 

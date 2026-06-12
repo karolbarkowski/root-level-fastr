@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
 import { PanResponder, StyleSheet, View } from 'react-native';
-import { Shadow } from 'react-native-shadow-2';
+import React, { useEffect, useRef } from 'react';
 
+import { Shadow } from 'react-native-shadow-2';
 import { colors } from './theme';
 
 interface Props {
@@ -18,7 +18,7 @@ const DEGREES_PER_HOUR = 30; // a full 360° turn = 12 hours, like a clock
 
 const DOT_RIM = 18;
 const DOT_HOLE = 15;
-const DOT_TOP = 15; // distance from the disc's top edge to the dot
+const DOT_TOP = 5; // distance from the disc's top edge to the dot
 
 const clamp = (n: number, lo: number, hi: number) =>
   Math.min(hi, Math.max(lo, n));

@@ -190,10 +190,10 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     gap: 10,
-    padding: 26,
+    padding: 38,
     borderWidth: 1,
     borderRadius: 999,
-    borderColor: colors.textSecondary,
+    borderColor: '#dbe2eb',
     aspectRatio: 1 / 1,
   },
   controlButtonLabel: {
