@@ -4,14 +4,49 @@ import { colors } from './theme';
 
 type Segment = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g';
 
+// Seven-segment geometry. Each segment is a tapered hexagon; bump HALF to make
+// the segments chunkier (gaps shrink accordingly).
+const HALF = 5; // half the segment thickness
+const TAPER = 7; // length of the angled tip
+const XL = 10; // left vertical centerline
+const XR = 66; // right vertical centerline
+const YT = 7; // top horizontal centerline
+const YM = 48; // middle horizontal centerline
+const YB = 89; // bottom horizontal centerline
+
+const poly = (...pts: [number, number][]) =>
+  pts.map(([x, y]) => `${x},${y}`).join(' ');
+
+// Horizontal bar centered on y, spanning XL → XR.
+const horiz = (y: number) =>
+  poly(
+    [XL, y],
+    [XL + TAPER, y - HALF],
+    [XR - TAPER, y - HALF],
+    [XR, y],
+    [XR - TAPER, y + HALF],
+    [XL + TAPER, y + HALF],
+  );
+
+// Vertical bar centered on x, spanning y0 → y1.
+const vert = (x: number, y0: number, y1: number) =>
+  poly(
+    [x, y0],
+    [x + HALF, y0 + TAPER],
+    [x + HALF, y1 - TAPER],
+    [x, y1],
+    [x - HALF, y1 - TAPER],
+    [x - HALF, y0 + TAPER],
+  );
+
 const SEGMENTS: Record<Segment, string> = {
-  a: '14,4 18,0 62,0 66,4 62,8 18,8',
-  b: '66,10 70,14 70,44 66,48 62,44 62,14',
-  c: '66,52 70,56 70,86 66,90 62,86 62,56',
-  d: '14,92 18,88 62,88 66,92 62,96 18,96',
-  e: '10,52 14,56 14,86 10,90 6,86 6,56',
-  f: '10,10 14,14 14,44 10,48 6,44 6,14',
-  g: '14,48 18,44 62,44 66,48 62,52 18,52',
+  a: horiz(YT),
+  b: vert(XR, YT, YM),
+  c: vert(XR, YM, YB),
+  d: horiz(YB),
+  e: vert(XL, YM, YB),
+  f: vert(XL, YT, YM),
+  g: horiz(YM),
 };
 
 const DIGITS: Record<number, Segment[]> = {
