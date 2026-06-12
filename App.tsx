@@ -1,28 +1,12 @@
 import { ActiveFast, FastEntry } from './src/types';
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from 'react-native';
-import {
-  DEFAULT_RING_CONFIG,
-  DEFAULT_TARGET_HOURS,
-  MAX_TARGET_HOURS,
-  MIN_TARGET_HOURS,
-} from './src/config';
+import { Alert, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { DEFAULT_RING_CONFIG, DEFAULT_TARGET_HOURS } from './src/config';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  clearActiveFast,
-  loadActiveFast,
-  loadHistory,
-  saveActiveFast,
-  saveHistory,
-} from './src/storage';
+import { clearActiveFast, loadActiveFast, loadHistory, saveActiveFast, saveHistory } from './src/storage';
 
 import DigitalNumber from './src/DigitalNumber';
 import FastingRing from './src/FastingRing';
+import Footer from './src/Footer';
 import HoursDial from './src/HoursDial';
 import Logo from './src/Logo';
 import { colors } from './src/theme';
@@ -42,10 +26,7 @@ export default function App() {
   // Restore persisted state on launch.
   useEffect(() => {
     (async () => {
-      const [active, entries] = await Promise.all([
-        loadActiveFast(),
-        loadHistory(),
-      ]);
+      const [active, entries] = await Promise.all([loadActiveFast(), loadHistory()]);
       if (active) {
         setActiveFast(active);
         setTargetHours(active.targetHours);
@@ -116,20 +97,11 @@ export default function App() {
       <View style={styles.main}>
         {/* All three layers share the same centered box, stacked back-to-front */}
         <View style={styles.layer} pointerEvents="box-none">
-          <FastingRing
-            size={ringSize}
-            totalHours={targetHours}
-            elapsedHours={elapsedHours}
-            config={ringConfig}
-          />
+          <FastingRing size={ringSize} totalHours={targetHours} elapsedHours={elapsedHours} config={ringConfig} />
         </View>
 
         <View style={styles.layer} pointerEvents="box-none">
-          <HoursDial
-            value={targetHours}
-            size={buttonSize}
-            onChange={setHoursFromDial}
-          />
+          <HoursDial value={targetHours} size={buttonSize} onChange={setHoursFromDial} />
         </View>
 
         <View style={styles.layer} pointerEvents="none">
@@ -141,9 +113,9 @@ export default function App() {
         </View>
       </View>
 
-      {/* <View style={styles.footer}>
-        <HistoryList entries={history} />
-      </View> */}
+      <View style={styles.footer}>
+        <Footer onBuyMeCoffeeClick={() => {}} onHistoryClick={() => {}} onLegendClick={() => {}} />
+      </View>
     </View>
   );
 }
@@ -155,7 +127,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: colors.bg,
     paddingHorizontal: 20,
-    paddingVertical: 80,
+    paddingVertical: 120,
   },
   header: {
     width: '100%',
