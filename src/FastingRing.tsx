@@ -24,7 +24,7 @@ const SWEEP = 270;
 const TICK_COUNT = 135; // fine ticks around the dial
 const TICK_LEN = 12;
 const TICK_WIDTH = 1;
-const OUTER_INSET = 6; // gap from the canvas edge to the tick tips
+const OUTER_INSET = 18; // gap from the canvas edge to the tick tips (room for icon chips)
 const HEAD_LEN = 22; // current-position marker
 const HEAD_WIDTH = 3.5;
 const MARKER_SIZE = 30; // milestone icon chips
@@ -44,7 +44,7 @@ export default function FastingRing({
   const cx = size / 2;
   const cy = size / 2;
   const rOuter = size / 2 - OUTER_INSET;
-  const rMarker = size / 2 - MARKER_SIZE / 2 - 4; // icon chips ride the tick band
+  const rMarker = rOuter - TICK_LEN / 2; // chip centered on the tick band
 
   const progress = Math.min(Math.max(elapsedHours / totalHours, 0), 1);
 

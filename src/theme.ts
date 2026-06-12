@@ -11,7 +11,7 @@ export const colors = {
   shadowDark: '#B7C3D8', // bottom-right drop shadow
   shadowLight: '#f3f6fa', // top-left highlight
   textPrimary: '#717984',
-  textSecondary: '#C6CDDD',
+  textSecondary: '#bdc3d3',
   accent: '#46a2cd',
 
   // Tick-gauge ring — pastel, blended into the background.

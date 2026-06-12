@@ -24,6 +24,7 @@ import {
 
 import DigitalNumber from './src/DigitalNumber';
 import FastingRing from './src/FastingRing';
+import Logo from './src/Logo';
 import SoftCard from './src/SoftCard';
 import { colors } from './src/theme';
 import { formatElapsed } from './src/format';
@@ -111,11 +112,7 @@ export default function App() {
 
   return (
     <View style={styles.root}>
-      {/* Wordmark */}
-      <View style={styles.header}>
-        <Text style={styles.logo}>FastR</Text>
-        <Text style={styles.tagline}>Track your fast</Text>
-      </View>
+      <Logo />
 
       <View style={styles.main}>
         <FastingRing
@@ -186,11 +183,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
 
-  header: {
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 68,
-  },
   main: {
     flex: 1,
     alignItems: 'center',
@@ -200,21 +192,6 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     marginBottom: 0,
-  },
-
-  logo: {
-    fontSize: 34,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    color: colors.textPrimary,
-  },
-  tagline: {
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-    color: colors.textSecondary,
-    marginTop: 2,
   },
   centerButton: {
     alignItems: 'center',

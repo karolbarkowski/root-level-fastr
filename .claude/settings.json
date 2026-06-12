@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(adb exec-out *)",
+      "PowerShell(Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\(\"d:\\\\Dev\\\\Projects\\\\FastR\\\\assets\\\\logo.png\"\\); \"$\\($img.Width\\)x$\\($img.Height\\)\"; $img.Dispose\\(\\))",
+      "Bash(npx tsc *)",
+      "Bash(adb shell *)"
+    ]
+  }
+}
