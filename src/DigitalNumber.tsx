@@ -1,5 +1,7 @@
 import { G, Polygon, Svg } from 'react-native-svg';
 
+import { colors } from './theme';
+
 type Segment = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g';
 
 const SEGMENTS: Record<Segment, string> = {
@@ -55,20 +57,17 @@ export const SevenSegmentDigit = ({
 
 interface Props {
   value: number;
-  activeColor?: string;
-  inactiveColor?: string;
   width?: number;
   height?: number;
 }
 
 export default function DigitalDisplay({
   value,
-  activeColor = '#C66E3D',
-  inactiveColor = '#d2d7de',
   width = 180,
   height = 100,
 }: Props) {
   const number = Math.max(0, Math.min(99, Math.floor(value)));
+  const inactiveColor = '#dde0e6';
 
   const tens = Math.floor(number / 10);
   const ones = number % 10;
@@ -78,14 +77,14 @@ export default function DigitalDisplay({
       <SevenSegmentDigit
         digit={tens}
         x={0}
-        activeColor={activeColor}
+        activeColor={colors.accent}
         inactiveColor={inactiveColor}
       />
 
       <SevenSegmentDigit
         digit={ones}
         x={84}
-        activeColor={activeColor}
+        activeColor={colors.accent}
         inactiveColor={inactiveColor}
       />
     </Svg>

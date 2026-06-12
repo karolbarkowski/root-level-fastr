@@ -24,10 +24,9 @@ import {
 
 import DigitalNumber from './src/DigitalNumber';
 import FastingRing from './src/FastingRing';
+import HoursDial from './src/HoursDial';
 import Logo from './src/Logo';
-import SoftCard from './src/SoftCard';
 import { colors } from './src/theme';
-import { formatElapsed } from './src/format';
 
 const HOUR_MS = 3600_000;
 
@@ -70,10 +69,9 @@ export default function App() {
   const elapsedMs = isRunning ? now - activeFast.startedAt : 0;
   const elapsedHours = elapsedMs / HOUR_MS;
 
-  const adjustHours = useCallback((delta: number) => {
-    setTargetHours(h =>
-      Math.min(MAX_TARGET_HOURS, Math.max(MIN_TARGET_HOURS, h + delta)),
-    );
+  // The drag dial spans its own 0–99 range, independent of the stepper bounds.
+  const setHoursFromDial = useCallback((h: number) => {
+    setTargetHours(Math.max(0, Math.min(99, h)));
   }, []);
 
   const startFast = useCallback(() => {
@@ -112,59 +110,35 @@ export default function App() {
 
   return (
     <View style={styles.root}>
-      <Logo />
+      <View style={styles.header}>
+        <Logo />
+      </View>
 
       <View style={styles.main}>
-        <FastingRing
-          size={ringSize}
-          totalHours={targetHours}
-          elapsedHours={elapsedHours}
-          config={ringConfig}
-        >
-          <SoftCard
-            contentStyle={[
-              styles.centerButton,
-              { width: buttonSize, height: buttonSize },
-            ]}
-            radius={buttonSize / 2}
-            distance={6}
-          >
-            {!isRunning && (
-              <Pressable style={styles.centerPressable} onPress={startFast}>
-                <Text style={styles.startText}>START</Text>
-              </Pressable>
-            )}
+        {/* All three layers share the same centered box, stacked back-to-front */}
+        <View style={styles.layer} pointerEvents="box-none">
+          <FastingRing
+            size={ringSize}
+            totalHours={targetHours}
+            elapsedHours={elapsedHours}
+            config={ringConfig}
+          />
+        </View>
 
-            {isRunning && (
-              <Pressable style={styles.centerPressable} onPress={endFast}>
-                <Text style={styles.elapsedLabel}>FASTING</Text>
-                <Text style={styles.elapsedTime}>
-                  {formatElapsed(elapsedMs)}
-                </Text>
-                <Text style={styles.endHint}>tap to end</Text>
-              </Pressable>
-            )}
-          </SoftCard>
-        </FastingRing>
+        <View style={styles.layer} pointerEvents="box-none">
+          <HoursDial
+            value={targetHours}
+            size={buttonSize}
+            onChange={setHoursFromDial}
+          />
+        </View>
 
-        {/* Duration stepper — flat, hidden while fasting */}
-        <View style={styles.stepper}>
-          <Pressable
-            style={styles.stepperButton}
-            hitSlop={8}
-            onPress={() => adjustHours(-1)}
-          >
-            <Text style={styles.stepperSign}>−</Text>
-          </Pressable>
-          <DigitalNumber value={targetHours} width={90} />
-          {/* <Text style={styles.stepperValue}>{targetHours} hrs</Text> */}
-          <Pressable
-            style={styles.stepperButton}
-            hitSlop={8}
-            onPress={() => adjustHours(1)}
-          >
-            <Text style={styles.stepperSign}>+</Text>
-          </Pressable>
+        <View style={styles.layer} pointerEvents="none">
+          <View style={styles.controlButtonWrapper}>
+            <Text style={styles.controlButtonLabel}>HRS</Text>
+            <DigitalNumber value={targetHours} height={50} />
+            <Text style={styles.controlButtonLabel}>START</Text>
+          </View>
         </View>
       </View>
 
@@ -181,8 +155,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: colors.bg,
     paddingHorizontal: 20,
+    paddingVertical: 80,
   },
 
+  // Layout
+  header: {
+    width: '100%',
+    alignItems: 'center',
+  },
   main: {
     flex: 1,
     alignItems: 'center',
@@ -193,6 +173,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 0,
   },
+
+  // Each child sits in its own absolutely-filled, centered layer so they
+  // stack on top of one another instead of flowing in a column.
+  layer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  controlButtonWrapper: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 10,
+    padding: 26,
+    borderWidth: 1,
+    borderRadius: 999,
+    borderColor: colors.textSecondary,
+    aspectRatio: 1 / 1,
+  },
+  controlButtonLabel: {
+    fontSize: 16,
+    fontWeight: 800,
+    color: colors.textPrimary,
+  },
+
   centerButton: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -226,12 +235,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 12,
   },
-  stepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: -24, // tucks into the ring's bottom gap
-    marginBottom: 8,
-  },
+
   stepperButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
