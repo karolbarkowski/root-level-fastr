@@ -1,10 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 
-import Coffee from '../assets/icons/coffee.svg';
-import History from '../assets/icons/history.svg';
-import Legend from '../assets/icons/legend.svg';
-import SoftButton from './SoftButton';
-import { colors } from './theme';
+import Coffee from '../../../assets/icons/coffee.svg';
+import History from '../../../assets/icons/history.svg';
+import Legend from '../../../assets/icons/legend.svg';
+import SoftButton from '../SoftButton';
+import { colors } from '../../theme';
 
 export type FooterProps = {
   onHistoryClick: () => void;

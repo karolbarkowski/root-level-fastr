@@ -2,7 +2,7 @@ import { GestureResponderEvent, Pressable, StyleProp, ViewStyle } from 'react-na
 import React, { ReactNode } from 'react';
 
 import { Shadow } from 'react-native-shadow-2';
-import { colors } from './theme';
+import { colors } from '../theme';
 
 interface Props {
   children?: ReactNode;

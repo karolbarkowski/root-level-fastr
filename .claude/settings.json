@@ -4,7 +4,16 @@
       "Bash(adb exec-out *)",
       "PowerShell(Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\(\"d:\\\\Dev\\\\Projects\\\\FastR\\\\assets\\\\logo.png\"\\); \"$\\($img.Width\\)x$\\($img.Height\\)\"; $img.Dispose\\(\\))",
       "Bash(npx tsc *)",
-      "Bash(adb shell *)"
+      "Bash(adb shell *)",
+      "Bash(npm install *)",
+      "Bash(npm test *)",
+      "Bash(ls node_modules/@react-native/)",
+      "Bash(git stash *)",
+      "Bash(node -e \"console.log\\(require\\('./package.json'\\).devDependencies['@react-native/jest-preset'] || 'NOT in package.json devDeps'\\)\")",
+      "Bash(rm -f __tests__/App.test.tsx jest.config.js jest.setup.js)",
+      "Bash(rmdir __tests__)",
+      "Bash(ls __tests__)",
+      "Bash(ls jest.config.js jest.setup.js)"
     ]
   }
 }

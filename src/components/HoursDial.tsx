@@ -2,7 +2,7 @@ import { PanResponder, StyleSheet, View } from 'react-native';
 import React, { useEffect, useRef } from 'react';
 
 import { Shadow } from 'react-native-shadow-2';
-import { colors } from './theme';
+import { colors } from '../theme';
 
 interface Props {
   /** Current hour value (0–99). */
@@ -20,8 +20,7 @@ const DOT_RIM = 18;
 const DOT_HOLE = 15;
 const DOT_TOP = 5; // distance from the disc's top edge to the dot
 
-const clamp = (n: number, lo: number, hi: number) =>
-  Math.min(hi, Math.max(lo, n));
+const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
 /**
  * A draggable neumorphic knob. Spinning it clockwise advances the value
@@ -64,11 +63,7 @@ export default function HoursDial({ value, onChange, size = 132 }: Props) {
           delta += 360;
         }
         drag.current.lastAngle = a;
-        drag.current.hours = clamp(
-          drag.current.hours + delta / DEGREES_PER_HOUR,
-          MIN,
-          MAX,
-        );
+        drag.current.hours = clamp(drag.current.hours + delta / DEGREES_PER_HOUR, MIN, MAX);
         const next = Math.round(drag.current.hours);
         if (next !== valueRef.current) {
           onChangeRef.current(next);
@@ -94,13 +89,7 @@ export default function HoursDial({ value, onChange, size = 132 }: Props) {
       onLayout={() => measureCenter(containerRef.current)}
       {...pan.panHandlers}
     >
-      <Shadow
-        distance={16}
-        startColor={colors.shadowDark}
-        offset={[7, 8]}
-        safeRender
-        style={{ borderRadius: radius }}
-      >
+      <Shadow distance={16} startColor={colors.shadowDark} offset={[7, 8]} safeRender style={{ borderRadius: radius }}>
         <Shadow
           distance={16}
           startColor={colors.shadowLight}
@@ -114,18 +103,8 @@ export default function HoursDial({ value, onChange, size = 132 }: Props) {
           }}
         >
           {/* Rotating layer carrying the position dot */}
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              { transform: [{ rotate: `${value * DEGREES_PER_HOUR}deg` }] },
-            ]}
-          >
-            <View
-              style={[
-                styles.dotRim,
-                { top: DOT_TOP, left: (size - DOT_RIM) / 2 },
-              ]}
-            >
+          <View style={[StyleSheet.absoluteFill, { transform: [{ rotate: `${value * DEGREES_PER_HOUR}deg` }] }]}>
+            <View style={[styles.dotRim, { top: DOT_TOP, left: (size - DOT_RIM) / 2 }]}>
               <View style={styles.dotHole} />
             </View>
           </View>

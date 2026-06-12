@@ -1,6 +1,6 @@
 import { G, Polygon, Svg } from 'react-native-svg';
 
-import { colors } from './theme';
+import { colors } from '../theme';
 
 type Segment = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g';
 
@@ -14,8 +14,7 @@ const YT = 7; // top horizontal centerline
 const YM = 48; // middle horizontal centerline
 const YB = 89; // bottom horizontal centerline
 
-const poly = (...pts: [number, number][]) =>
-  pts.map(([x, y]) => `${x},${y}`).join(' ');
+const poly = (...pts: [number, number][]) => pts.map(([x, y]) => `${x},${y}`).join(' ');
 
 // Horizontal bar centered on y, spanning XL → XR.
 const horiz = (y: number) =>
@@ -69,12 +68,7 @@ interface SevenSegmentDigitProps {
   inactiveColor: string;
 }
 
-export const SevenSegmentDigit = ({
-  digit,
-  x = 0,
-  activeColor,
-  inactiveColor,
-}: SevenSegmentDigitProps) => {
+export const SevenSegmentDigit = ({ digit, x = 0, activeColor, inactiveColor }: SevenSegmentDigitProps) => {
   const active = DIGITS[digit];
 
   return (
@@ -96,11 +90,7 @@ interface Props {
   height?: number;
 }
 
-export default function DigitalDisplay({
-  value,
-  width = 180,
-  height = 100,
-}: Props) {
+export default function DigitalDisplay({ value, width = 180, height = 100 }: Props) {
   const number = Math.max(0, Math.min(99, Math.floor(value)));
   const inactiveColor = '#dde0e6';
 
@@ -109,19 +99,9 @@ export default function DigitalDisplay({
 
   return (
     <Svg width={width} height={height} viewBox="0 0 140 100">
-      <SevenSegmentDigit
-        digit={tens}
-        x={0}
-        activeColor={colors.accent}
-        inactiveColor={inactiveColor}
-      />
+      <SevenSegmentDigit digit={tens} x={0} activeColor={colors.accent} inactiveColor={inactiveColor} />
 
-      <SevenSegmentDigit
-        digit={ones}
-        x={70}
-        activeColor={colors.accent}
-        inactiveColor={inactiveColor}
-      />
+      <SevenSegmentDigit digit={ones} x={70} activeColor={colors.accent} inactiveColor={inactiveColor} />
     </Svg>
   );
 }

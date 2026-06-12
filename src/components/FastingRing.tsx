@@ -2,8 +2,8 @@ import React, { ReactNode, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 
-import { RingConfig } from './types';
-import { colors } from './theme';
+import { RingConfig } from '../types';
+import { colors } from '../theme';
 
 interface Props {
   size: number;
@@ -35,13 +35,7 @@ function polar(cx: number, cy: number, r: number, deg: number) {
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
-export default function FastingRing({
-  size,
-  totalHours,
-  elapsedHours,
-  config,
-  children,
-}: Props) {
+export default function FastingRing({ size, totalHours, elapsedHours, config, children }: Props) {
   const cx = size / 2;
   const cy = size / 2;
   const rOuter = size / 2 - OUTER_INSET;

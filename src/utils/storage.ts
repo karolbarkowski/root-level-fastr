@@ -1,5 +1,6 @@
+import { ActiveFast, FastEntry } from '../types';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ActiveFast, FastEntry } from './types';
 
 const HISTORY_KEY = 'fasting:history';
 const ACTIVE_KEY = 'fasting:active';

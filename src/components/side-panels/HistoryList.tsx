@@ -1,9 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { formatDay, formatTime } from './format';
+import { formatDay, formatTime } from '../../utils/format';
 
-import { FastEntry } from './types';
+import { FastEntry } from '../../types';
 import React from 'react';
-import { colors } from './theme';
+import { colors } from '../../theme';
 
 interface Props {
   entries: FastEntry[];
@@ -12,10 +12,7 @@ interface Props {
 export default function HistoryList({ entries }: Props) {
   // Bars are sized relative to the longest fast on record, so the list reads
   // comparatively at a glance.
-  const maxMs = entries.reduce(
-    (m, e) => Math.max(m, e.endedAt - e.startedAt),
-    0,
-  );
+  const maxMs = entries.reduce((m, e) => Math.max(m, e.endedAt - e.startedAt), 0);
 
   return (
     <View style={styles.card}>
@@ -28,14 +25,9 @@ export default function HistoryList({ entries }: Props) {
           const actualMs = entry.endedAt - entry.startedAt;
           const frac = maxMs > 0 ? actualMs / maxMs : 0;
           const totalMin = Math.max(0, Math.floor(actualMs / 60000));
-          const durationLabel = `${Math.floor(totalMin / 60)}h ${
-            totalMin % 60
-          }m`;
+          const durationLabel = `${Math.floor(totalMin / 60)}h ${totalMin % 60}m`;
           return (
-            <View
-              key={entry.id}
-              style={[styles.row, i > 0 && styles.rowDivider]}
-            >
+            <View key={entry.id} style={[styles.row, i > 0 && styles.rowDivider]}>
               <Text style={styles.date} numberOfLines={1}>
                 {formatDay(entry.startedAt)}, {formatTime(entry.startedAt)}
               </Text>
@@ -45,12 +37,7 @@ export default function HistoryList({ entries }: Props) {
               <View style={styles.spacer} />
 
               <View style={styles.barTrack}>
-                <View
-                  style={[
-                    styles.barFill,
-                    { width: `${Math.max(frac * 100, 6)}%` },
-                  ]}
-                />
+                <View style={[styles.barFill, { width: `${Math.max(frac * 100, 6)}%` }]} />
               </View>
             </View>
           );

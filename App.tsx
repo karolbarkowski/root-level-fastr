@@ -2,14 +2,18 @@ import { ActiveFast, FastEntry } from './src/types';
 import { Alert, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { DEFAULT_RING_CONFIG, DEFAULT_TARGET_HOURS } from './src/config';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { clearActiveFast, loadActiveFast, loadHistory, saveActiveFast, saveHistory } from './src/storage';
+import { clearActiveFast, loadActiveFast, loadHistory, saveActiveFast, saveHistory } from './src/utils/storage';
 
-import DigitalNumber from './src/DigitalNumber';
-import FastingRing from './src/FastingRing';
-import Footer from './src/Footer';
-import HoursDial from './src/HoursDial';
-import Logo from './src/Logo';
+import DigitalNumber from './src/components/DigitalNumber';
+import FastingRing from './src/components/FastingRing';
+import Footer from './src/components/layout/Footer';
+import HistoryList from './src/components/side-panels/HistoryList';
+import HoursDial from './src/components/HoursDial';
+import Logo from './src/components/layout/Logo';
+import SlidePanel from './src/components/SlidePanel';
 import { colors } from './src/theme';
+
+type PanelKey = 'history' | 'legend' | 'coffee';
 
 const HOUR_MS = 3600_000;
 
@@ -22,6 +26,7 @@ export default function App() {
   const [activeFast, setActiveFast] = useState<ActiveFast | null>(null);
   const [history, setHistory] = useState<FastEntry[]>([]);
   const [now, setNow] = useState(Date.now());
+  const [openPanel, setOpenPanel] = useState<PanelKey | null>(null);
 
   // Restore persisted state on launch.
   useEffect(() => {
@@ -89,39 +94,55 @@ export default function App() {
   const ringConfig = useMemo(() => DEFAULT_RING_CONFIG, []);
 
   return (
-    <View style={styles.root}>
-      <View style={styles.header}>
-        <Logo />
-      </View>
-
-      <View style={styles.main}>
-        {/* All three layers share the same centered box, stacked back-to-front */}
-        <View style={styles.layer} pointerEvents="box-none">
-          <FastingRing size={ringSize} totalHours={targetHours} elapsedHours={elapsedHours} config={ringConfig} />
+    <View style={styles.screen}>
+      <View style={styles.root}>
+        <View style={styles.header}>
+          <Logo />
         </View>
 
-        <View style={styles.layer} pointerEvents="box-none">
-          <HoursDial value={targetHours} size={buttonSize} onChange={setHoursFromDial} />
-        </View>
+        <View style={styles.main}>
+          {/* All three layers share the same centered box, stacked back-to-front */}
+          <View style={styles.layer} pointerEvents="box-none">
+            <FastingRing size={ringSize} totalHours={targetHours} elapsedHours={elapsedHours} config={ringConfig} />
+          </View>
 
-        <View style={styles.layer} pointerEvents="none">
-          <View style={styles.controlButtonWrapper}>
-            <Text style={styles.controlButtonLabel}>HRS</Text>
-            <DigitalNumber value={targetHours} height={50} />
-            <Text style={styles.controlButtonLabel}>START</Text>
+          <View style={styles.layer} pointerEvents="box-none">
+            <HoursDial value={targetHours} size={buttonSize} onChange={setHoursFromDial} />
+          </View>
+
+          <View style={styles.layer} pointerEvents="none">
+            <View style={styles.controlButtonWrapper}>
+              <Text style={styles.controlButtonLabel}>HRS</Text>
+              <DigitalNumber value={targetHours} height={50} />
+              <Text style={styles.controlButtonLabel}>START</Text>
+            </View>
           </View>
         </View>
+
+        <View style={styles.footer}>
+          <Footer
+            onBuyMeCoffeeClick={() => setOpenPanel('coffee')}
+            onHistoryClick={() => setOpenPanel('history')}
+            onLegendClick={() => setOpenPanel('legend')}
+          />
+        </View>
       </View>
 
-      <View style={styles.footer}>
-        <Footer onBuyMeCoffeeClick={() => {}} onHistoryClick={() => {}} onLegendClick={() => {}} />
-      </View>
+      <SlidePanel visible={openPanel !== null} onClose={() => setOpenPanel(null)}>
+        {openPanel === 'history' && <HistoryList entries={history} />}
+        {openPanel === 'legend' && <Text style={styles.panelTitle}>Legend</Text>}
+        {openPanel === 'coffee' && <Text style={styles.panelTitle}>Buy me a coffee</Text>}
+      </SlidePanel>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   // Layout
+  screen: {
+    flex: 1,
+    backgroundColor: colors.bg,
+  },
   root: {
     flex: 1,
     justifyContent: 'space-between',
@@ -169,6 +190,12 @@ const styles = StyleSheet.create({
   controlButtonLabel: {
     fontSize: 14,
     fontWeight: 800,
+    color: colors.textPrimary,
+  },
+
+  panelTitle: {
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.textPrimary,
   },
 
