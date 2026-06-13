@@ -33,7 +33,7 @@ export default function SoftButton({
 }: Props) {
   const rounded = { borderRadius: radius };
   return (
-    <Pressable onPress={onPress}>
+    <Pressable onPress={onPress} hitSlop={12}>
       <Shadow
         distance={blur}
         startColor={colors.shadowDark}

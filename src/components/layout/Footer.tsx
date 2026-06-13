@@ -34,7 +34,6 @@ export default function Footer(props: FooterProps) {
 
 const styles = StyleSheet.create({
   footer: {
-    flex: 1,
     width: '80%',
     flexDirection: 'row',
     justifyContent: 'space-between',

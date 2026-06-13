@@ -9,6 +9,7 @@ import FastingRing from './src/components/FastingRing';
 import Footer from './src/components/layout/Footer';
 import HistoryList from './src/components/side-panels/HistoryList';
 import HoursDial from './src/components/HoursDial';
+import Legend from './src/components/side-panels/Legend';
 import Logo from './src/components/layout/Logo';
 import SlidePanel from './src/components/SlidePanel';
 import { colors } from './src/theme';
@@ -130,7 +131,7 @@ export default function App() {
 
       <SlidePanel visible={openPanel !== null} onClose={() => setOpenPanel(null)}>
         {openPanel === 'history' && <HistoryList entries={history} />}
-        {openPanel === 'legend' && <Text style={styles.panelTitle}>Legend</Text>}
+        {openPanel === 'legend' && <Legend />}
         {openPanel === 'coffee' && <Text style={styles.panelTitle}>Buy me a coffee</Text>}
       </SlidePanel>
     </View>

@@ -1,15 +1,11 @@
-import Animated, {
-  Easing,
-  interpolate,
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import React, { ReactNode, useEffect, useState } from 'react';
 
+import Close from '../../assets/icons/close.svg';
+import SoftButton from './SoftButton';
 import { colors } from '../theme';
+import { scheduleOnRN } from 'react-native-worklets';
 
 interface Props {
   visible: boolean;
@@ -20,6 +16,7 @@ interface Props {
 }
 
 const DURATION = 150;
+const BUTTON_SIZE = 36;
 
 /**
  * A reusable overlay panel that slides in from the right edge. Tapping the
@@ -47,7 +44,7 @@ export default function SlidePanel({ visible, onClose, children, widthRatio = 0.
       { duration: DURATION, easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic) },
       finished => {
         if (finished && !visible) {
-          runOnJS(setMounted)(false);
+          scheduleOnRN(setMounted, false);
         }
       },
     );
@@ -71,17 +68,13 @@ export default function SlidePanel({ visible, onClose, children, widthRatio = 0.
       </Animated.View>
 
       <Animated.View style={[styles.panel, { width: panelWidth }, panelStyle]}>
-        <Pressable
-          style={styles.closeButton}
-          hitSlop={12}
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel="Close panel"
-        >
-          <Text style={styles.closeIcon}>×</Text>
-        </Pressable>
+        <ScrollView style={styles.content}>{children}</ScrollView>
 
-        <View style={styles.content}>{children}</View>
+        <View style={styles.center}>
+          <SoftButton onPress={onClose}>
+            <Close style={styles.closeIcon} width={BUTTON_SIZE} height={BUTTON_SIZE} />
+          </SoftButton>
+        </View>
       </Animated.View>
     </View>
   );
@@ -98,15 +91,14 @@ const styles = StyleSheet.create({
   },
   panel: {
     position: 'absolute',
-    top: 0,
+    top: 60,
     right: 0,
-    bottom: 0,
+    bottom: 60,
     backgroundColor: colors.surface,
     borderTopLeftRadius: 28,
     borderBottomLeftRadius: 28,
-    paddingTop: 64,
+    paddingVertical: 32,
     paddingHorizontal: 24,
-    paddingBottom: 32,
     // Light shadow cast leftward onto the screen.
     shadowColor: colors.shadowDark,
     shadowOffset: { width: -6, height: 0 },
@@ -114,20 +106,12 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 12,
   },
-  closeButton: {
-    position: 'absolute',
-    top: 18,
-    right: 22,
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   closeIcon: {
-    fontSize: 28,
-    lineHeight: 30,
-    fontWeight: '600',
+    margin: 14,
     color: colors.textPrimary,
+  },
+  center: {
+    alignItems: 'center',
   },
   content: {
     flex: 1,
