@@ -54,6 +54,4 @@ export const DEFAULT_RING_CONFIG: RingConfig = {
 };
 
 export const DEFAULT_TARGET_HOURS = 16;
-
-// TODO: replace with your real Buy Me a Coffee page.
-export const BUY_ME_A_COFFEE_URL = 'https://buymeacoffee.com/yourname';
+export const BUY_ME_A_COFFEE_URL = 'https://buymeacoffee.com/rootlevelit';
