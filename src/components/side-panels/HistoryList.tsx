@@ -6,11 +6,11 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { formatDateShort, formatDurationShort } from '../../utils/format';
 
 import { FastEntry } from '../../types';
-import React, { useEffect } from 'react';
 import { colors } from '../../theme';
 
 const HOUR_MS = 3600_000;
@@ -63,8 +63,6 @@ export default function HistoryList({ entries }: Props) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.heading}>History</Text>
-
       {entries.length === 0 ? (
         <Text style={styles.empty}>No completed fasts yet.</Text>
       ) : (
@@ -94,13 +92,6 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginBottom: 32,
   },
-  heading: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginTop: 8,
-    marginBottom: 14,
-  },
   empty: {
     color: colors.textSecondary,
     fontSize: 14,
@@ -109,7 +100,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 9,
+    paddingVertical: 6,
     gap: 12,
   },
   date: {

@@ -10,7 +10,7 @@ export default React.memo(Logo);
 
 const styles = StyleSheet.create({
   logo: {
-    width: 120,
-    height: 120 * (159 / 612),
+    width: 180,
+    height: 180 * (159 / 612),
   },
 });

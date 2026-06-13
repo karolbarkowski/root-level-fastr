@@ -1,5 +1,4 @@
 import { ActiveFast, FastEntry } from './src/types';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -9,10 +8,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { DEFAULT_RING_CONFIG, DEFAULT_TARGET_HOURS } from './src/config';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { clearActiveFast, loadActiveFast, loadHistory, saveActiveFast, saveHistory } from './src/utils/storage';
-import { scheduleOnRN } from 'react-native-worklets';
 
 import Coffee from './src/components/side-panels/Coffee';
 import DigitalNumber from './src/components/DigitalNumber';
@@ -25,6 +24,7 @@ import Logo from './src/components/layout/Logo';
 import SlidePanel from './src/components/SlidePanel';
 import { colors } from './src/theme';
 import { formatElapsed } from './src/utils/format';
+import { scheduleOnRN } from 'react-native-worklets';
 
 type PanelKey = 'history' | 'legend' | 'coffee';
 
@@ -166,7 +166,7 @@ function Main() {
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.root, { paddingTop: insets.top + 48, paddingBottom: insets.bottom + 40 }]}>
+      <View style={[styles.root, { paddingTop: insets.top + 60, paddingBottom: insets.bottom + 60 }]}>
         <View style={styles.header}>
           <Logo />
         </View>
