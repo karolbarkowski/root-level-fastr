@@ -10,6 +10,12 @@ export function formatDay(ms: number): string {
   return `${DAYS[d.getDay()]} ${MONTHS[d.getMonth()]} ${String(d.getDate()).padStart(2, '0')}`;
 }
 
+/** "Nov 03" */
+export function formatDateShort(ms: number): string {
+  const d = new Date(ms);
+  return `${MONTHS[d.getMonth()]} ${String(d.getDate()).padStart(2, '0')}`;
+}
+
 /** "3:00 PM" */
 export function formatTime(ms: number): string {
   const d = new Date(ms);

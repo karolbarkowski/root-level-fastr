@@ -1,23 +1,64 @@
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 import { StyleSheet, Text, View } from 'react-native';
-import { formatDay, formatDurationShort, formatTime } from '../../utils/format';
+import { formatDateShort, formatDurationShort } from '../../utils/format';
 
 import { FastEntry } from '../../types';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { colors } from '../../theme';
+
+const HOUR_MS = 3600_000;
 
 // Stagger the first few rows as the panel opens; later rows (below the fold)
 // appear together so long histories don't take seconds to settle.
 const STAGGER_MS = 40;
 const STAGGER_LIMIT = 8;
 
+interface BarProps {
+  /** Bar length as a fraction of the longest fast on record. */
+  frac: number;
+  /** Whether the fast reached its target duration. */
+  metTarget: boolean;
+  /** Row index, used to stagger the grow-in. */
+  index: number;
+}
+
+/** A horizontal duration bar that grows from zero when the panel opens. */
+function HistoryBar({ frac, metTarget, index }: BarProps) {
+  const grow = useSharedValue(0);
+
+  useEffect(() => {
+    grow.value = withDelay(
+      120 + Math.min(index, STAGGER_LIMIT) * STAGGER_MS,
+      withTiming(Math.max(frac, 0.04), { duration: 450, easing: Easing.out(Easing.cubic) }),
+    );
+  }, [frac, grow, index]);
+
+  const growStyle = useAnimatedStyle(() => ({ width: `${grow.value * 100}%` }));
+
+  return (
+    <View style={styles.barTrack}>
+      <Animated.View style={[styles.barFill, !metTarget && styles.barFillShort, growStyle]} />
+    </View>
+  );
+}
+
 interface Props {
   entries: FastEntry[];
 }
 
+/**
+ * A minimal bar-chart history: one row per fast — date, a bar sized against
+ * the longest fast on record, and the duration. Accent bars hit their target,
+ * muted bars fell short.
+ */
 export default function HistoryList({ entries }: Props) {
-  // Bars are sized relative to the longest fast on record, so the list reads
-  // comparatively at a glance.
   const maxMs = entries.reduce((m, e) => Math.max(m, e.endedAt - e.startedAt), 0);
 
   return (
@@ -30,23 +71,16 @@ export default function HistoryList({ entries }: Props) {
         entries.map((entry, i) => {
           const actualMs = entry.endedAt - entry.startedAt;
           const frac = maxMs > 0 ? actualMs / maxMs : 0;
+          const metTarget = actualMs >= entry.targetHours * HOUR_MS;
           return (
             <Animated.View
               key={entry.id}
               entering={FadeInDown.duration(220).delay(Math.min(i, STAGGER_LIMIT) * STAGGER_MS)}
-              style={[styles.row, i > 0 && styles.rowDivider]}
+              style={styles.row}
             >
-              <Text style={styles.date} numberOfLines={1}>
-                {formatDay(entry.startedAt)}, {formatTime(entry.startedAt)}
-              </Text>
-              <Text style={styles.arrow}>→</Text>
+              <Text style={styles.date}>{formatDateShort(entry.startedAt)}</Text>
+              <HistoryBar frac={frac} metTarget={metTarget} index={i} />
               <Text style={styles.duration}>{formatDurationShort(actualMs)}</Text>
-
-              <View style={styles.spacer} />
-
-              <View style={styles.barTrack}>
-                <View style={[styles.barFill, { width: `${Math.max(frac * 100, 6)}%` }]} />
-              </View>
             </Animated.View>
           );
         })
@@ -65,7 +99,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
     marginTop: 8,
-    marginBottom: 2,
+    marginBottom: 14,
   },
   empty: {
     color: colors.textSecondary,
@@ -75,40 +109,38 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 13,
-  },
-  rowDivider: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(120,140,170,0.22)',
+    paddingVertical: 9,
+    gap: 12,
   },
   date: {
-    fontSize: 13,
+    width: 48,
+    fontSize: 12,
     fontWeight: '600',
-    color: colors.textPrimary,
-    flexShrink: 1,
-  },
-  arrow: {
-    fontSize: 13,
     color: colors.textSecondary,
-    marginHorizontal: 8,
+    fontVariant: ['tabular-nums'],
   },
   duration: {
+    width: 56,
     fontSize: 13,
     fontWeight: '700',
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
-  },
-  spacer: {
-    flex: 1,
-    minWidth: 12,
+    textAlign: 'right',
   },
   barTrack: {
-    width: 56,
-    height: 4,
-    alignItems: 'flex-end',
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(120,140,170,0.16)',
+    overflow: 'hidden',
   },
   barFill: {
     height: '100%',
+    borderRadius: 3,
     backgroundColor: colors.accent,
+  },
+  // Fasts that ended before reaching their target render muted.
+  barFillShort: {
+    backgroundColor: 'rgba(120,140,170,0.45)',
   },
 });
