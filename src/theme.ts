@@ -10,8 +10,8 @@ export const colors = {
   surface: '#EAF0F8', // raised card / button face
   shadowDark: '#B7C3D8', // bottom-right drop shadow
   shadowLight: '#f3f6fa', // top-left highlight
-  textPrimary: '#808B98',
-  textSecondary: '#bdc3d3',
+  textPrimary: '#8a95a1',
+  textSecondary: '#a2a5ae',
   accent: '#46a2cd',
 
   // Tick-gauge ring — pastel, blended into the background.
