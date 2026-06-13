@@ -1,5 +1,7 @@
 import { G, Polygon, Svg } from 'react-native-svg';
 
+import React from 'react';
+
 import { colors } from '../theme';
 
 type Segment = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g';
@@ -90,7 +92,7 @@ interface Props {
   height?: number;
 }
 
-export default function DigitalDisplay({ value, width = 180, height = 100 }: Props) {
+function DigitalDisplay({ value, width = 180, height = 100 }: Props) {
   const number = Math.max(0, Math.min(99, Math.floor(value)));
   const inactiveColor = '#dde0e6';
 
@@ -105,3 +107,5 @@ export default function DigitalDisplay({ value, width = 180, height = 100 }: Pro
     </Svg>
   );
 }
+
+export default React.memo(DigitalDisplay);

@@ -1,3 +1,4 @@
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { PanResponder, StyleSheet, View } from 'react-native';
 import React, { useEffect, useRef } from 'react';
 
@@ -10,6 +11,8 @@ interface Props {
   /** Called with the new clamped integer value while dragging. */
   onChange: (value: number) => void;
   size?: number;
+  /** Ignore drags (e.g. while a fast is running). */
+  disabled?: boolean;
 }
 
 const MIN = 0;
@@ -29,30 +32,37 @@ const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n
  *
  * Fully standalone — only React Native + react-native-shadow-2 + theme colors.
  */
-export default function HoursDial({ value, onChange, size = 132 }: Props) {
+function HoursDial({ value, onChange, size = 132, disabled = false }: Props) {
   const radius = size / 2;
 
   // PanResponder is created once, so reach live props/measurements via refs.
   const valueRef = useRef(value);
   const onChangeRef = useRef(onChange);
+  const disabledRef = useRef(disabled);
   useEffect(() => {
     valueRef.current = value;
     onChangeRef.current = onChange;
+    disabledRef.current = disabled;
   });
 
   const center = useRef({ x: 0, y: 0 });
   const drag = useRef({ lastAngle: 0, hours: 0 });
+
+  // The disc swells slightly while grabbed, so the knob feels physical.
+  const grabScale = useSharedValue(1);
+  const grabStyle = useAnimatedStyle(() => ({ transform: [{ scale: grabScale.value }] }));
 
   const angleOf = (px: number, py: number) =>
     (Math.atan2(py - center.current.y, px - center.current.x) * 180) / Math.PI;
 
   const pan = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => !disabledRef.current,
+      onMoveShouldSetPanResponder: () => !disabledRef.current,
       onPanResponderGrant: (_e, g) => {
         drag.current.lastAngle = angleOf(g.x0, g.y0);
         drag.current.hours = valueRef.current;
+        grabScale.value = withTiming(1.03, { duration: 120 });
       },
       onPanResponderMove: (_e, g) => {
         const a = angleOf(g.moveX, g.moveY);
@@ -69,6 +79,12 @@ export default function HoursDial({ value, onChange, size = 132 }: Props) {
           onChangeRef.current(next);
         }
       },
+      onPanResponderRelease: () => {
+        grabScale.value = withSpring(1, { damping: 16, stiffness: 220 });
+      },
+      onPanResponderTerminate: () => {
+        grabScale.value = withSpring(1, { damping: 16, stiffness: 220 });
+      },
     }),
   ).current;
 
@@ -81,11 +97,11 @@ export default function HoursDial({ value, onChange, size = 132 }: Props) {
   const containerRef = useRef<View | null>(null);
 
   return (
-    <View
-      ref={r => {
+    <Animated.View
+      ref={(r: View | null) => {
         containerRef.current = r;
       }}
-      style={{ width: size, height: size }}
+      style={[{ width: size, height: size }, grabStyle]}
       onLayout={() => measureCenter(containerRef.current)}
       {...pan.panHandlers}
     >
@@ -110,9 +126,11 @@ export default function HoursDial({ value, onChange, size = 132 }: Props) {
           </View>
         </Shadow>
       </Shadow>
-    </View>
+    </Animated.View>
   );
 }
+
+export default React.memo(HoursDial);
 
 const styles = StyleSheet.create({
   // The rim is the lit bottom-right edge of the recess.

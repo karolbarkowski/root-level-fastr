@@ -1,7 +1,17 @@
 import { ActiveFast, FastEntry } from './src/types';
-import { Alert, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import Animated, {
+  FadeIn,
+  FadeOut,
+  LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { DEFAULT_RING_CONFIG, DEFAULT_TARGET_HOURS } from './src/config';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { clearActiveFast, loadActiveFast, loadHistory, saveActiveFast, saveHistory } from './src/utils/storage';
 
 import DigitalNumber from './src/components/DigitalNumber';
@@ -13,14 +23,16 @@ import Legend from './src/components/side-panels/Legend';
 import Logo from './src/components/layout/Logo';
 import SlidePanel from './src/components/SlidePanel';
 import { colors } from './src/theme';
+import { formatElapsed } from './src/utils/format';
 
 type PanelKey = 'history' | 'legend' | 'coffee';
 
 const HOUR_MS = 3600_000;
 
-export default function App() {
-  const { width } = useWindowDimensions();
-  const ringSize = Math.min(width - 40, 380);
+function Main() {
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const ringSize = Math.min(width - 40, height * 0.48, 380);
   const buttonSize = Math.round(ringSize * 0.7);
 
   const [targetHours, setTargetHours] = useState(DEFAULT_TARGET_HOURS);
@@ -52,8 +64,11 @@ export default function App() {
   }, [activeFast]);
 
   const isRunning = activeFast !== null;
-  const elapsedMs = isRunning ? now - activeFast.startedAt : 0;
+  const elapsedMs = isRunning ? Math.max(0, now - activeFast.startedAt) : 0;
   const elapsedHours = elapsedMs / HOUR_MS;
+  // While running the ring scale is locked to the fast that was started,
+  // so dial input can't rescale a fast in progress.
+  const ringHours = activeFast?.targetHours ?? targetHours;
 
   // The drag dial spans its own 0–99 range, independent of the stepper bounds.
   const setHoursFromDial = useCallback((h: number) => {
@@ -92,11 +107,26 @@ export default function App() {
     ]);
   }, [activeFast, history]);
 
-  const ringConfig = useMemo(() => DEFAULT_RING_CONFIG, []);
+  const onCenterPress = isRunning ? endFast : startFast;
+
+  // Stable handlers so the memoized footer skips per-second clock re-renders.
+  const openCoffee = useCallback(() => setOpenPanel('coffee'), []);
+  const openHistory = useCallback(() => setOpenPanel('history'), []);
+  const openLegend = useCallback(() => setOpenPanel('legend'), []);
+  const closePanel = useCallback(() => setOpenPanel(null), []);
+
+  // Press-in feedback on the center button.
+  const centerScale = useSharedValue(1);
+  const centerStyle = useAnimatedStyle(() => ({ transform: [{ scale: centerScale.value }] }));
 
   return (
     <View style={styles.screen}>
-      <View style={styles.root}>
+      <View
+        style={[
+          styles.root,
+          { paddingTop: insets.top + 48, paddingBottom: insets.bottom + 40 },
+        ]}
+      >
         <View style={styles.header}>
           <Logo />
         </View>
@@ -104,37 +134,74 @@ export default function App() {
         <View style={styles.main}>
           {/* All three layers share the same centered box, stacked back-to-front */}
           <View style={styles.layer} pointerEvents="box-none">
-            <FastingRing size={ringSize} totalHours={targetHours} elapsedHours={elapsedHours} config={ringConfig} />
+            <FastingRing size={ringSize} totalHours={ringHours} elapsedHours={elapsedHours} config={DEFAULT_RING_CONFIG} />
           </View>
 
           <View style={styles.layer} pointerEvents="box-none">
-            <HoursDial value={targetHours} size={buttonSize} onChange={setHoursFromDial} />
+            <HoursDial value={targetHours} size={buttonSize} onChange={setHoursFromDial} disabled={isRunning} />
           </View>
 
-          <View style={styles.layer} pointerEvents="none">
-            <View style={styles.controlButtonWrapper}>
-              <Text style={styles.controlButtonLabel}>HRS</Text>
-              <DigitalNumber value={targetHours} height={50} />
-              <Text style={styles.controlButtonLabel}>START</Text>
-            </View>
+          <View style={styles.layer} pointerEvents="box-none">
+            <Pressable
+              onPress={onCenterPress}
+              onPressIn={() => {
+                centerScale.value = withTiming(0.95, { duration: 90 });
+              }}
+              onPressOut={() => {
+                centerScale.value = withSpring(1, { damping: 14, stiffness: 220 });
+              }}
+            >
+              <Animated.View
+                style={[styles.controlButtonWrapper, centerStyle]}
+                layout={LinearTransition.springify().damping(18).stiffness(200)}
+              >
+                {isRunning ? (
+                  <Animated.View
+                    key="running"
+                    style={styles.centerContent}
+                    entering={FadeIn.duration(220)}
+                    exiting={FadeOut.duration(120)}
+                  >
+                    <Text style={styles.elapsedLabel}>FASTING</Text>
+                    <Text style={styles.elapsedTime}>{formatElapsed(elapsedMs)}</Text>
+                    <Text style={styles.endHint}>tap to end</Text>
+                  </Animated.View>
+                ) : (
+                  <Animated.View
+                    key="idle"
+                    style={styles.centerContent}
+                    entering={FadeIn.duration(220)}
+                    exiting={FadeOut.duration(120)}
+                  >
+                    <Text style={styles.controlButtonLabel}>HRS</Text>
+                    <DigitalNumber value={targetHours} height={50} />
+                    <Text style={styles.controlButtonLabel}>START</Text>
+                  </Animated.View>
+                )}
+              </Animated.View>
+            </Pressable>
           </View>
         </View>
 
         <View style={styles.footer}>
-          <Footer
-            onBuyMeCoffeeClick={() => setOpenPanel('coffee')}
-            onHistoryClick={() => setOpenPanel('history')}
-            onLegendClick={() => setOpenPanel('legend')}
-          />
+          <Footer onBuyMeCoffeeClick={openCoffee} onHistoryClick={openHistory} onLegendClick={openLegend} />
         </View>
       </View>
 
-      <SlidePanel visible={openPanel !== null} onClose={() => setOpenPanel(null)}>
+      <SlidePanel visible={openPanel !== null} onClose={closePanel}>
         {openPanel === 'history' && <HistoryList entries={history} />}
         {openPanel === 'legend' && <Legend />}
         {openPanel === 'coffee' && <Text style={styles.panelTitle}>Buy me a coffee</Text>}
       </SlidePanel>
     </View>
+  );
+}
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <Main />
+    </SafeAreaProvider>
   );
 }
 
@@ -149,7 +216,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: colors.bg,
     paddingHorizontal: 20,
-    paddingVertical: 120,
   },
   header: {
     width: '100%',
@@ -179,14 +245,17 @@ const styles = StyleSheet.create({
   },
 
   controlButtonWrapper: {
-    flexDirection: 'column',
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'center',
     padding: 40,
     borderWidth: 1,
     borderRadius: 999,
     borderColor: '#dbe2eb',
     aspectRatio: 1 / 1,
+  },
+  centerContent: {
+    alignItems: 'center',
+    gap: 10,
   },
   controlButtonLabel: {
     fontSize: 14,

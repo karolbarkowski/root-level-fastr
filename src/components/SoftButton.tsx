@@ -1,3 +1,4 @@
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { GestureResponderEvent, Pressable, StyleProp, ViewStyle } from 'react-native';
 import React, { ReactNode } from 'react';
 
@@ -20,8 +21,11 @@ interface Props {
  * fake the soft-UI extruded look — a dark shadow bottom-right and a white highlight
  * top-left. Unlike RN's native `shadow*`/`elevation`, this renders identically on
  * iOS and Android.
+ *
+ * Pressing scales the surface down briefly, reading as the button sinking
+ * back into the screen before springing out again.
  */
-export default function SoftButton({
+function SoftButton({
   children,
   style,
   radius = 999,
@@ -32,28 +36,45 @@ export default function SoftButton({
   onPress = () => {},
 }: Props) {
   const rounded = { borderRadius: radius };
+
+  const scale = useSharedValue(1);
+  const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
   return (
-    <Pressable onPress={onPress} hitSlop={12}>
-      <Shadow
-        distance={blur}
-        startColor={colors.shadowDark}
-        offset={[distance, distance]}
-        stretch={stretch}
-        safeRender
-        containerStyle={style}
-        style={rounded}
-      >
+    <Pressable
+      onPress={onPress}
+      hitSlop={12}
+      onPressIn={() => {
+        scale.value = withTiming(0.92, { duration: 80 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 12, stiffness: 260 });
+      }}
+    >
+      <Animated.View style={pressStyle}>
         <Shadow
           distance={blur}
-          startColor={colors.shadowLight}
-          offset={[-distance, -distance]}
+          startColor={colors.shadowDark}
+          offset={[distance, distance]}
           stretch={stretch}
           safeRender
-          style={[rounded, { backgroundColor: surfaceColor }]}
+          containerStyle={style}
+          style={rounded}
         >
-          {children}
+          <Shadow
+            distance={blur}
+            startColor={colors.shadowLight}
+            offset={[-distance, -distance]}
+            stretch={stretch}
+            safeRender
+            style={[rounded, { backgroundColor: surfaceColor }]}
+          >
+            {children}
+          </Shadow>
         </Shadow>
-      </Shadow>
+      </Animated.View>
     </Pressable>
   );
 }
+
+export default React.memo(SoftButton);

@@ -1,3 +1,4 @@
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { DEFAULT_RING_CONFIG } from '../../config';
@@ -40,7 +41,11 @@ export default function Legend() {
         const copy = EFFECT_COPY[bp.effectCode];
         const Icon = bp.icon;
         return (
-          <View key={bp.effectCode} style={[styles.row, i > 0 && styles.rowDivider]}>
+          <Animated.View
+            key={bp.effectCode}
+            entering={FadeInDown.duration(220).delay(i * 40)}
+            style={[styles.row, i > 0 && styles.rowDivider]}
+          >
             <View style={styles.iconWrap}>
               <Icon width={ICON_SIZE} height={ICON_SIZE} />
             </View>
@@ -52,7 +57,7 @@ export default function Legend() {
               </View>
               {copy ? <Text style={styles.description}>{copy.description}</Text> : null}
             </View>
-          </View>
+          </Animated.View>
         );
       })}
     </View>

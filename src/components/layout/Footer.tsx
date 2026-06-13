@@ -1,5 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
+import React from 'react';
+
 import Coffee from '../../../assets/icons/coffee.svg';
 import History from '../../../assets/icons/history.svg';
 import Legend from '../../../assets/icons/legend.svg';
@@ -14,7 +16,7 @@ export type FooterProps = {
 
 const BUTTON_SIZE = 36;
 
-export default function Footer(props: FooterProps) {
+function Footer(props: FooterProps) {
   return (
     <View style={styles.footer}>
       <SoftButton onPress={props.onBuyMeCoffeeClick}>
@@ -31,6 +33,8 @@ export default function Footer(props: FooterProps) {
     </View>
   );
 }
+
+export default React.memo(Footer);
 
 const styles = StyleSheet.create({
   footer: {

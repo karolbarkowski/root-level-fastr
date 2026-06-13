@@ -15,7 +15,8 @@ interface Props {
   widthRatio?: number;
 }
 
-const DURATION = 150;
+const OPEN_DURATION = 240;
+const CLOSE_DURATION = 160;
 const BUTTON_SIZE = 36;
 
 /**
@@ -41,7 +42,10 @@ export default function SlidePanel({ visible, onClose, children, widthRatio = 0.
     }
     progress.value = withTiming(
       visible ? 1 : 0,
-      { duration: DURATION, easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic) },
+      {
+        duration: visible ? OPEN_DURATION : CLOSE_DURATION,
+        easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+      },
       finished => {
         if (finished && !visible) {
           scheduleOnRN(setMounted, false);
@@ -56,6 +60,13 @@ export default function SlidePanel({ visible, onClose, children, widthRatio = 0.
     transform: [{ translateX: interpolate(progress.value, [0, 1], [panelWidth, 0]) }],
   }));
 
+  // Content trails the panel slightly and fades in late, giving the surface
+  // a layered, parallax feel instead of sliding in as one rigid block.
+  const contentStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0.4, 1], [0, 1]),
+    transform: [{ translateX: interpolate(progress.value, [0, 1], [36, 0]) }],
+  }));
+
   if (!mounted) {
     return null;
   }
@@ -68,7 +79,9 @@ export default function SlidePanel({ visible, onClose, children, widthRatio = 0.
       </Animated.View>
 
       <Animated.View style={[styles.panel, { width: panelWidth }, panelStyle]}>
-        <ScrollView style={styles.content}>{children}</ScrollView>
+        <Animated.View style={[styles.content, contentStyle]}>
+          <ScrollView>{children}</ScrollView>
+        </Animated.View>
 
         <View style={styles.center}>
           <SoftButton onPress={onClose}>

@@ -1,9 +1,15 @@
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { StyleSheet, Text, View } from 'react-native';
-import { formatDay, formatTime } from '../../utils/format';
+import { formatDay, formatDurationShort, formatTime } from '../../utils/format';
 
 import { FastEntry } from '../../types';
 import React from 'react';
 import { colors } from '../../theme';
+
+// Stagger the first few rows as the panel opens; later rows (below the fold)
+// appear together so long histories don't take seconds to settle.
+const STAGGER_MS = 40;
+const STAGGER_LIMIT = 8;
 
 interface Props {
   entries: FastEntry[];
@@ -24,22 +30,24 @@ export default function HistoryList({ entries }: Props) {
         entries.map((entry, i) => {
           const actualMs = entry.endedAt - entry.startedAt;
           const frac = maxMs > 0 ? actualMs / maxMs : 0;
-          const totalMin = Math.max(0, Math.floor(actualMs / 60000));
-          const durationLabel = `${Math.floor(totalMin / 60)}h ${totalMin % 60}m`;
           return (
-            <View key={entry.id} style={[styles.row, i > 0 && styles.rowDivider]}>
+            <Animated.View
+              key={entry.id}
+              entering={FadeInDown.duration(220).delay(Math.min(i, STAGGER_LIMIT) * STAGGER_MS)}
+              style={[styles.row, i > 0 && styles.rowDivider]}
+            >
               <Text style={styles.date} numberOfLines={1}>
                 {formatDay(entry.startedAt)}, {formatTime(entry.startedAt)}
               </Text>
               <Text style={styles.arrow}>→</Text>
-              <Text style={styles.duration}>{durationLabel}</Text>
+              <Text style={styles.duration}>{formatDurationShort(actualMs)}</Text>
 
               <View style={styles.spacer} />
 
               <View style={styles.barTrack}>
                 <View style={[styles.barFill, { width: `${Math.max(frac * 100, 6)}%` }]} />
               </View>
-            </View>
+            </Animated.View>
           );
         })
       )}
@@ -51,10 +59,6 @@ const styles = StyleSheet.create({
   card: {
     alignSelf: 'stretch',
     marginBottom: 32,
-  },
-  cardContent: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
   },
   heading: {
     fontSize: 15,

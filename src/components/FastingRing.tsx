@@ -1,6 +1,8 @@
-import React, { ReactNode, useMemo } from 'react';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import React, { FC, ReactNode, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
+import type { SvgProps } from 'react-native-svg';
 
 import { RingConfig } from '../types';
 import { colors } from '../theme';
@@ -35,7 +37,48 @@ function polar(cx: number, cy: number, r: number, deg: number) {
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
-export default function FastingRing({ size, totalHours, elapsedHours, config, children }: Props) {
+interface ChipProps {
+  icon: FC<SvgProps>;
+  reached: boolean;
+  x: number;
+  y: number;
+}
+
+/**
+ * A milestone icon chip that "pops" (overshoot scale) the moment the fast
+ * crosses its breakpoint. Restored fasts mount already-reached chips at rest.
+ */
+const MilestoneChip = React.memo(({ icon: Icon, reached, x, y }: ChipProps) => {
+  const scale = useSharedValue(1);
+  const prevReached = useRef(reached);
+
+  useEffect(() => {
+    if (reached && !prevReached.current) {
+      scale.value = withSequence(
+        withTiming(1.35, { duration: 160 }),
+        withSpring(1, { damping: 12, stiffness: 240 }),
+      );
+    }
+    prevReached.current = reached;
+  }, [reached, scale]);
+
+  const pop = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <Animated.View
+      style={[
+        styles.marker,
+        reached && styles.markerReached,
+        { left: x - MARKER_SIZE / 2, top: y - MARKER_SIZE / 2 },
+        pop,
+      ]}
+    >
+      <Icon width={MARKER_ICON_SIZE} height={MARKER_ICON_SIZE} />
+    </Animated.View>
+  );
+});
+
+function FastingRing({ size, totalHours, elapsedHours, config, children }: Props) {
   const cx = size / 2;
   const cy = size / 2;
   const rOuter = size / 2 - OUTER_INSET;
@@ -52,13 +95,18 @@ export default function FastingRing({ size, totalHours, elapsedHours, config, ch
     [config.breakpoints, totalHours],
   );
 
+  // Number of ticks currently lit. Quantizing progress to this integer keeps
+  // the memo below stable between ticks lighting up, so the 135 <Line>
+  // elements aren't rebuilt on every one-second clock update.
+  const litCount = Math.floor(progress * (TICK_COUNT - 1) + 1e-6) + (progress > 0 ? 1 : 0);
+
   // Evenly spaced gauge ticks; the elapsed portion is "lit".
   const ticks = useMemo(() => {
     const out = [];
     for (let i = 0; i < TICK_COUNT; i++) {
       const t = i / (TICK_COUNT - 1);
       const deg = START_ANGLE + SWEEP * t;
-      const lit = t <= progress + 1e-6;
+      const lit = i < litCount;
       const p1 = polar(cx, cy, rOuter - TICK_LEN, deg);
       const p2 = polar(cx, cy, rOuter, deg);
       out.push(
@@ -75,7 +123,7 @@ export default function FastingRing({ size, totalHours, elapsedHours, config, ch
       );
     }
     return out;
-  }, [cx, cy, rOuter, progress]);
+  }, [cx, cy, rOuter, litCount]);
 
   // Brighter marker at the current position while a fast is running.
   let head = null;
@@ -104,23 +152,11 @@ export default function FastingRing({ size, totalHours, elapsedHours, config, ch
       </Svg>
 
       {/* Milestone icon chips, seated on the tick band */}
-      {milestones.map((bp, i) => {
+      {milestones.map(bp => {
         const deg = START_ANGLE + SWEEP * bp.frac;
         const p = polar(cx, cy, rMarker, deg);
         const reached = bp.frac <= progress + 1e-6;
-        const Icon = bp.icon;
-        return (
-          <View
-            key={`bp-${i}`}
-            style={[
-              styles.marker,
-              reached && styles.markerReached,
-              { left: p.x - MARKER_SIZE / 2, top: p.y - MARKER_SIZE / 2 },
-            ]}
-          >
-            <Icon width={MARKER_ICON_SIZE} height={MARKER_ICON_SIZE} />
-          </View>
-        );
+        return <MilestoneChip key={bp.effectCode} icon={bp.icon} reached={reached} x={p.x} y={p.y} />;
       })}
 
       {/* Center content */}
@@ -130,6 +166,8 @@ export default function FastingRing({ size, totalHours, elapsedHours, config, ch
     </View>
   );
 }
+
+export default React.memo(FastingRing);
 
 const styles = StyleSheet.create({
   marker: {
