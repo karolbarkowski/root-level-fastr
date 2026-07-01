@@ -1,6 +1,12 @@
 import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import React, { ReactNode, useEffect } from 'react';
+import { scheduleOnRN } from 'react-native-worklets';
+
+// TEMP DEBUG — remove after the stuck-slide investigation.
+function logAnimDone(target: string, finished: boolean, value: number) {
+  console.log(`[SlidePanel] ${target} done: finished=${finished} progress=${value.toFixed(3)}`);
+}
 
 import Close from '../../assets/icons/close.svg';
 import SoftButton from './SoftButton';
@@ -36,10 +42,18 @@ function SlidePanel({ visible, onClose, children, widthRatio = 0.82 }: Props) {
   const progress = useSharedValue(0);
 
   useEffect(() => {
-    progress.value = withTiming(visible ? 1 : 0, {
-      duration: visible ? OPEN_DURATION : CLOSE_DURATION,
-      easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
-    });
+    const target = visible ? 'open' : 'close';
+    console.log(`[SlidePanel] ${target} start`);
+    progress.value = withTiming(
+      visible ? 1 : 0,
+      {
+        duration: visible ? OPEN_DURATION : CLOSE_DURATION,
+        easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+      },
+      finished => {
+        scheduleOnRN(logAnimDone, target, finished ?? false, progress.value);
+      },
+    );
   }, [visible, progress]);
 
   const backdropStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
@@ -86,7 +100,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(70, 85, 110, 0.28)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
   panel: {
     position: 'absolute',
@@ -98,12 +112,9 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 28,
     paddingVertical: 32,
     paddingHorizontal: 24,
-    // Light shadow cast leftward onto the screen.
-    shadowColor: colors.shadowDark,
-    shadowOffset: { width: -6, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 12,
+    borderWidth: 1,
+    borderRightWidth: 0,
+    borderColor: colors.outline,
   },
   closeIcon: {
     margin: 14,

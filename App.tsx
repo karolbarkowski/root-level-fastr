@@ -8,7 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { DEFAULT_RING_CONFIG, DEFAULT_TARGET_HOURS } from './src/config';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StatusBar, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { clearActiveFast, loadActiveFast, loadHistory, saveActiveFast, saveHistory } from './src/utils/storage';
@@ -197,6 +197,7 @@ function Main() {
 
   return (
     <View style={styles.screen}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
       <View style={[styles.root, { paddingTop: insets.top + 60, paddingBottom: insets.bottom + 60 }]}>
         <View style={styles.header}>
           <Logo />
@@ -325,7 +326,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#dbe2eb',
+    borderColor: colors.outline,
     overflow: 'hidden',
   },
   centerContent: {

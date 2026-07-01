@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   rowSelected: {
-    backgroundColor: 'rgba(70,162,205,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   date: {
     width: 48,
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(120,140,170,0.16)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
     overflow: 'hidden',
   },
   barFill: {
@@ -186,14 +186,14 @@ const styles = StyleSheet.create({
   },
   // Fasts that ended before reaching their target render muted.
   barFillShort: {
-    backgroundColor: 'rgba(120,140,170,0.45)',
+    backgroundColor: 'rgba(255,255,255,0.30)',
   },
   removeRow: {
     marginTop: 16,
     alignItems: 'center',
   },
   removeText: {
-    color: '#d9534f',
+    color: colors.danger,
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.5,

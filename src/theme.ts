@@ -1,22 +1,20 @@
 /**
- * Soft-UI ("neumorphic") palette.
+ * Flat dark palette.
  *
- * Surfaces sit only a touch lighter than the background and rely on paired
- * shadows — a dark one bottom-right, a white highlight top-left — to look
- * extruded from the screen. See {@link ./SoftCard}.
+ * Near-black backdrop, hairline outlines and light-gray type — hierarchy
+ * comes from tone and thin strokes, never from shadows or elevation.
  */
 export const colors = {
-  bg: '#D8E1EA', // soft periwinkle backdrop
-  surface: '#EAF0F8', // raised card / button face
-  shadowDark: '#B7C3D8', // bottom-right drop shadow
-  shadowLight: '#f3f6fa', // top-left highlight
-  textPrimary: '#8a95a1',
-  textSecondary: '#a2a5ae',
-  accent: '#46a2cd',
+  bg: '#2B2B2B', // charcoal backdrop
+  surface: '#333333', // panels / raised-but-flat surfaces
+  outline: '#5A5A5A', // 1px strokes on buttons, chips, discs
+  textPrimary: '#D8D8D8',
+  textSecondary: '#8C8C8C',
+  accent: '#ECECEC', // near-white; the only "loud" tone in the UI
+  danger: '#D97B72',
 
-  // Tick-gauge ring — pastel, blended into the background.
-  ringTrack: 'rgba(120,140,170,0.28)', // ticks not yet reached
-  ringProgress: '#9AD4F0', // ticks within the elapsed portion
-  ringHead: '#5BC2F0', // brighter marker at the current position
-  ringMilestone: 'rgba(118,138,170,0.55)', // landmark ticks at milestones
+  // Tick-gauge ring — dim ticks, white-lit progress.
+  ringTrack: 'rgba(255,255,255,0.16)', // ticks not yet reached
+  ringProgress: '#ECECEC', // ticks within the elapsed portion
+  ringHead: '#FFFFFF', // brighter marker at the current position
 };

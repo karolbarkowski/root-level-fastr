@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
   <g transform="translate(-5.84,-13.97) scale(1.0225)">
-    <g transform="translate(0,159) scale(0.01,-0.01)" fill="#717986" stroke="none">
+    <g transform="translate(0,159) scale(0.01,-0.01)" fill="currentColor" stroke="none">
       <path d="M8272 11803 c-851 -1738 -1276 -3520 -1277 -5353 0 -1765 390 -3363
 1143 -4672 98 -170 254 -418 262 -418 26 0 351 568 495 864 1150 2362 1220
 5407 193 8256 -183 507 -649 1570 -688 1570 -4 0 -61 -111 -128 -247z M3267

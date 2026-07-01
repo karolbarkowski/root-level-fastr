@@ -94,7 +94,7 @@ interface Props {
 
 function DigitalDisplay({ value, width = 180, height = 100 }: Props) {
   const number = Math.max(0, Math.min(99, Math.floor(value)));
-  const inactiveColor = '#dde0e6';
+  const inactiveColor = '#3D3D3D';
 
   const tens = Math.floor(number / 10);
   const ones = number % 10;

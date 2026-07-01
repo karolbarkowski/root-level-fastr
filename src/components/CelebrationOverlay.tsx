@@ -170,11 +170,8 @@ const styles = StyleSheet.create({
     paddingVertical: 22,
     paddingHorizontal: 40,
     borderRadius: 24,
-    shadowColor: colors.shadowDark,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 18,
-    elevation: 12,
+    borderWidth: 1,
+    borderColor: colors.outline,
   },
   badgeEmoji: {
     fontSize: 40,

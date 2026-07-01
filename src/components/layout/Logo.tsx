@@ -6,7 +6,7 @@ import React from 'react';
 function Logo() {
   return (
     <View style={styles.container}>
-      <FastR width={80} height={80} />
+      <FastR width={80} height={80} color="#8C8C8C" />
       <Image source={require('../../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
     </View>
   );
@@ -21,6 +21,8 @@ const styles = StyleSheet.create({
   logo: {
     width: 120,
     height: 40,
+    // The wordmark PNG is dark; tint it light for the dark backdrop.
+    tintColor: '#D8D8D8',
   },
 });
 

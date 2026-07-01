@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   },
   rowDivider: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(120,140,170,0.22)',
+    borderTopColor: 'rgba(255,255,255,0.14)',
   },
   iconWrap: {
     width: ICON_SIZE + 8,

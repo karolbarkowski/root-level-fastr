@@ -13,7 +13,13 @@
       "Bash(rm -f __tests__/App.test.tsx jest.config.js jest.setup.js)",
       "Bash(rmdir __tests__)",
       "Bash(ls __tests__)",
-      "Bash(ls jest.config.js jest.setup.js)"
+      "Bash(ls jest.config.js jest.setup.js)",
+      "WebSearch",
+      "PowerShell(& \"D:\\\\AndroidSDK\\\\emulator\\\\emulator.exe\" -list-avds)",
+      "PowerShell(& \"D:\\\\AndroidSDK\\\\emulator\\\\emulator.exe\" -avd Pixel_10 -no-snapshot-save -no-boot-anim)",
+      "PowerShell(adb wait-for-device shell 'while [ \"$\\(getprop sys.boot_completed\\)\" != \"1\" ]; do sleep 1; done; echo booted')",
+      "PowerShell(\\(Get-Content \"d:\\\\Dev\\\\Projects\\\\FastR\\\\assets\\\\fastr-symbol.svg\" -Raw\\) -replace 'fill=\"#717986\"','fill=\"currentColor\"' | Set-Content \"d:\\\\Dev\\\\Projects\\\\FastR\\\\assets\\\\fastr-symbol.svg\" -NoNewline)",
+      "PowerShell(npm uninstall react-native-shadow-2)"
     ]
   }
 }
