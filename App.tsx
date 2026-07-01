@@ -113,37 +113,30 @@ function Main() {
   }, [activeFast, history]);
 
   // Permanently drop the given history entries (from the history panel).
-  const deleteEntries = useCallback(
-    (ids: string[]) => {
-      const remove = new Set(ids);
-      setHistory(prev => {
-        const next = prev.filter(e => !remove.has(e.id));
-        saveHistory(next);
-        return next;
-      });
-    },
-    [],
-  );
+  const deleteEntries = useCallback((ids: string[]) => {
+    const remove = new Set(ids);
+    setHistory(prev => {
+      const next = prev.filter(e => !remove.has(e.id));
+      saveHistory(next);
+      return next;
+    });
+  }, []);
 
   // Stable handlers so the memoized footer skips per-second clock re-renders.
-  const openCoffee = useCallback(() => setOpenPanel('coffee'), []);
-  const openHistory = useCallback(() => setOpenPanel('history'), []);
-  const openLegend = useCallback(() => setOpenPanel('legend'), []);
-  const closePanel = useCallback(() => setOpenPanel(null), []);
+  const openCoffee = () => setOpenPanel('coffee');
+  const openHistory = () => setOpenPanel('history');
+  const openLegend = () => setOpenPanel('legend');
+  const closePanel = () => setOpenPanel(null);
 
-  // Stable children element so the per-second clock tick doesn't re-commit
-  // into the panel subtree — a commit landing mid-slide interrupts the
-  // Reanimated timing and left the panel stuck partway in.
-  const panelContent = useMemo(
-    () => (
-      <>
-        {openPanel === 'history' && <HistoryList entries={history} onDelete={deleteEntries} />}
-        {openPanel === 'legend' && <Legend />}
-        {openPanel === 'coffee' && <Coffee />}
-      </>
-    ),
-    [openPanel, history, deleteEntries],
+  // Each panel gets its own permanently-mounted SlidePanel below, so opening
+  // one only animates a transform — nothing mounts or swaps mid-slide. The
+  // memoized elements keep clock-tick re-renders from committing into them.
+  const historyPanel = useMemo(
+    () => <HistoryList entries={history} onDelete={deleteEntries} />,
+    [history, deleteEntries],
   );
+  const legendPanel = useMemo(() => <Legend />, []);
+  const coffeePanel = useMemo(() => <Coffee />, []);
 
   // Press-in feedback on the center button.
   const centerScale = useSharedValue(1);
@@ -266,8 +259,14 @@ function Main() {
         </View>
       </View>
 
-      <SlidePanel visible={openPanel !== null} onClose={closePanel}>
-        {panelContent}
+      <SlidePanel visible={openPanel === 'history'} onClose={closePanel}>
+        {historyPanel}
+      </SlidePanel>
+      <SlidePanel visible={openPanel === 'legend'} onClose={closePanel}>
+        {legendPanel}
+      </SlidePanel>
+      <SlidePanel visible={openPanel === 'coffee'} onClose={closePanel}>
+        {coffeePanel}
       </SlidePanel>
 
       <CelebrationOverlay trigger={celebrateAt} />

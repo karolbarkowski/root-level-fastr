@@ -1,12 +1,6 @@
 import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import React, { ReactNode, useEffect } from 'react';
-import { scheduleOnRN } from 'react-native-worklets';
-
-// TEMP DEBUG — remove after the stuck-slide investigation.
-function logAnimDone(target: string, finished: boolean, value: number) {
-  console.log(`[SlidePanel] ${target} done: finished=${finished} progress=${value.toFixed(3)}`);
-}
 
 import Close from '../../assets/icons/close.svg';
 import SoftButton from './SoftButton';
@@ -42,18 +36,10 @@ function SlidePanel({ visible, onClose, children, widthRatio = 0.82 }: Props) {
   const progress = useSharedValue(0);
 
   useEffect(() => {
-    const target = visible ? 'open' : 'close';
-    console.log(`[SlidePanel] ${target} start`);
-    progress.value = withTiming(
-      visible ? 1 : 0,
-      {
-        duration: visible ? OPEN_DURATION : CLOSE_DURATION,
-        easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
-      },
-      finished => {
-        scheduleOnRN(logAnimDone, target, finished ?? false, progress.value);
-      },
-    );
+    progress.value = withTiming(visible ? 1 : 0, {
+      duration: visible ? OPEN_DURATION : CLOSE_DURATION,
+      easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+    });
   }, [visible, progress]);
 
   const backdropStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
