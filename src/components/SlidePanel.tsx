@@ -1,11 +1,10 @@
 import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 
 import Close from '../../assets/icons/close.svg';
 import SoftButton from './SoftButton';
 import { colors } from '../theme';
-import { scheduleOnRN } from 'react-native-worklets';
 
 interface Props {
   visible: boolean;
@@ -21,37 +20,26 @@ const BUTTON_SIZE = 36;
 
 /**
  * A reusable overlay panel that slides in from the right edge. Tapping the
- * dimmed backdrop or the "×" closes it. The surface mirrors the soft-UI app
- * style — rounded left corners and a light shadow cast toward the screen.
+ * dimmed backdrop or the "×" closes it.
  *
- * Driven by Reanimated — the slide and fade run entirely on the UI thread.
+ * The overlay stays mounted permanently (parked off-screen when closed) so
+ * no React commit — SVG shadow measurement, entering animations, clock-tick
+ * re-renders — lands inside the subtree while the slide is running. Commits
+ * mid-animation interrupt Reanimated's UI-thread timing on Fabric, which is
+ * what made the panel stall partway in.
  */
-export default function SlidePanel({ visible, onClose, children, widthRatio = 0.82 }: Props) {
+function SlidePanel({ visible, onClose, children, widthRatio = 0.82 }: Props) {
   const { width } = useWindowDimensions();
   const panelWidth = Math.min(width * widthRatio, 420);
 
   // One shared 0→1 value drives both the slide (translateX) and backdrop fade.
   const progress = useSharedValue(0);
 
-  // Keep the panel mounted through its exit animation, then unmount.
-  const [mounted, setMounted] = useState(visible);
-
   useEffect(() => {
-    if (visible) {
-      setMounted(true);
-    }
-    progress.value = withTiming(
-      visible ? 1 : 0,
-      {
-        duration: visible ? OPEN_DURATION : CLOSE_DURATION,
-        easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
-      },
-      finished => {
-        if (finished && !visible) {
-          scheduleOnRN(setMounted, false);
-        }
-      },
-    );
+    progress.value = withTiming(visible ? 1 : 0, {
+      duration: visible ? OPEN_DURATION : CLOSE_DURATION,
+      easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+    });
   }, [visible, progress]);
 
   const backdropStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
@@ -67,12 +55,8 @@ export default function SlidePanel({ visible, onClose, children, widthRatio = 0.
     transform: [{ translateX: interpolate(progress.value, [0, 1], [36, 0]) }],
   }));
 
-  if (!mounted) {
-    return null;
-  }
-
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+    <View style={StyleSheet.absoluteFill} pointerEvents={visible ? 'box-none' : 'none'}>
       {/* Backdrop — tap anywhere outside the panel to dismiss. */}
       <Animated.View style={[styles.backdrop, backdropStyle]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
@@ -92,6 +76,8 @@ export default function SlidePanel({ visible, onClose, children, widthRatio = 0.
     </View>
   );
 }
+
+export default React.memo(SlidePanel);
 
 const styles = StyleSheet.create({
   backdrop: {

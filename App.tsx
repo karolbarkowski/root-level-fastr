@@ -9,10 +9,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { DEFAULT_RING_CONFIG, DEFAULT_TARGET_HOURS } from './src/config';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { clearActiveFast, loadActiveFast, loadHistory, saveActiveFast, saveHistory } from './src/utils/storage';
 
+import CelebrationOverlay from './src/components/CelebrationOverlay';
 import Coffee from './src/components/side-panels/Coffee';
 import DigitalNumber from './src/components/DigitalNumber';
 import FastingRing from './src/components/FastingRing';
@@ -48,6 +49,8 @@ function Main() {
   const [history, setHistory] = useState<FastEntry[]>([]);
   const [now, setNow] = useState(Date.now());
   const [openPanel, setOpenPanel] = useState<PanelKey | null>(null);
+  // Bumped each time a fast ends to fire the celebration burst.
+  const [celebrateAt, setCelebrateAt] = useState(0);
 
   // Restore persisted state on launch.
   useEffect(() => {
@@ -104,15 +107,43 @@ function Main() {
     const next = [entry, ...history];
     setHistory(next);
     setActiveFast(null);
+    setCelebrateAt(Date.now());
     saveHistory(next);
     clearActiveFast();
   }, [activeFast, history]);
+
+  // Permanently drop the given history entries (from the history panel).
+  const deleteEntries = useCallback(
+    (ids: string[]) => {
+      const remove = new Set(ids);
+      setHistory(prev => {
+        const next = prev.filter(e => !remove.has(e.id));
+        saveHistory(next);
+        return next;
+      });
+    },
+    [],
+  );
 
   // Stable handlers so the memoized footer skips per-second clock re-renders.
   const openCoffee = useCallback(() => setOpenPanel('coffee'), []);
   const openHistory = useCallback(() => setOpenPanel('history'), []);
   const openLegend = useCallback(() => setOpenPanel('legend'), []);
   const closePanel = useCallback(() => setOpenPanel(null), []);
+
+  // Stable children element so the per-second clock tick doesn't re-commit
+  // into the panel subtree — a commit landing mid-slide interrupts the
+  // Reanimated timing and left the panel stuck partway in.
+  const panelContent = useMemo(
+    () => (
+      <>
+        {openPanel === 'history' && <HistoryList entries={history} onDelete={deleteEntries} />}
+        {openPanel === 'legend' && <Legend />}
+        {openPanel === 'coffee' && <Coffee />}
+      </>
+    ),
+    [openPanel, history, deleteEntries],
+  );
 
   // Press-in feedback on the center button.
   const centerScale = useSharedValue(1);
@@ -235,10 +266,10 @@ function Main() {
       </View>
 
       <SlidePanel visible={openPanel !== null} onClose={closePanel}>
-        {openPanel === 'history' && <HistoryList entries={history} />}
-        {openPanel === 'legend' && <Legend />}
-        {openPanel === 'coffee' && <Coffee />}
+        {panelContent}
       </SlidePanel>
+
+      <CelebrationOverlay trigger={celebrateAt} />
     </View>
   );
 }

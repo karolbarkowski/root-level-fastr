@@ -72,6 +72,22 @@ def enableProguardInReleaseBuilds = true
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+// True when a release artifact is actually being built (assembleRelease, bundleRelease, etc.).
+def isReleaseBuild = gradle.startParameter.taskNames.any { it.toLowerCase().contains("release") }
+
+// Return a required signing property or fail loudly with a clear message.
+def requiredSigningProp = { String name ->
+    def value = project.findProperty(name)
+    if (value == null || value.toString().isEmpty()) {
+        throw new RuntimeException(
+            "Missing required signing property '${name}'. " +
+            "Add it to your home Gradle properties file " +
+            "(e.g. C:\\Users\\<you>\\.gradle\\gradle.properties)."
+        )
+    }
+    return value
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -92,15 +108,23 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            storeFile file('fastr-prod.keystore')
+            keyAlias 'fastr-prod'
+            // Only require the passwords when actually building a release, so
+            // debug builds don't need the prod keystore secrets.
+            if (isReleaseBuild) {
+                storePassword requiredSigningProp("FASTR_PROD_STORE_PASSWORD")
+                keyPassword requiredSigningProp("FASTR_PROD_KEY_PASSWORD")
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             shrinkResources enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"

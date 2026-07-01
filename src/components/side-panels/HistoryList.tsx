@@ -6,8 +6,8 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
-import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
 import { formatDateShort, formatDurationShort } from '../../utils/format';
 
 import { FastEntry } from '../../types';
@@ -51,37 +51,85 @@ function HistoryBar({ frac, metTarget, index }: BarProps) {
 
 interface Props {
   entries: FastEntry[];
+  /** Permanently remove the given entries from storage. */
+  onDelete: (ids: string[]) => void;
 }
 
 /**
  * A minimal bar-chart history: one row per fast — date, a bar sized against
  * the longest fast on record, and the duration. Accent bars hit their target,
  * muted bars fell short.
+ *
+ * Tap a row to select it; once any rows are selected a "remove" button appears
+ * to permanently delete them.
  */
-export default function HistoryList({ entries }: Props) {
+export default function HistoryList({ entries, onDelete }: Props) {
   const maxMs = entries.reduce((m, e) => Math.max(m, e.endedAt - e.startedAt), 0);
+
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Drop selections for rows that no longer exist (e.g. after a delete).
+  useEffect(() => {
+    setSelected(prev => {
+      const ids = new Set(entries.map(e => e.id));
+      const next = new Set([...prev].filter(id => ids.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [entries]);
+
+  const toggle = useCallback((id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const removeSelected = useCallback(() => {
+    onDelete([...selected]);
+    setSelected(new Set());
+  }, [onDelete, selected]);
 
   return (
     <View style={styles.card}>
       {entries.length === 0 ? (
         <Text style={styles.empty}>No completed fasts yet.</Text>
       ) : (
-        entries.map((entry, i) => {
-          const actualMs = entry.endedAt - entry.startedAt;
-          const frac = maxMs > 0 ? actualMs / maxMs : 0;
-          const metTarget = actualMs >= entry.targetHours * HOUR_MS;
-          return (
-            <Animated.View
-              key={entry.id}
-              entering={FadeInDown.duration(220).delay(Math.min(i, STAGGER_LIMIT) * STAGGER_MS)}
-              style={styles.row}
-            >
-              <Text style={styles.date}>{formatDateShort(entry.startedAt)}</Text>
-              <HistoryBar frac={frac} metTarget={metTarget} index={i} />
-              <Text style={styles.duration}>{formatDurationShort(actualMs)}</Text>
+        <>
+          {entries.map((entry, i) => {
+            const actualMs = entry.endedAt - entry.startedAt;
+            const frac = maxMs > 0 ? actualMs / maxMs : 0;
+            const metTarget = actualMs >= entry.targetHours * HOUR_MS;
+            const isSelected = selected.has(entry.id);
+            return (
+              <Animated.View
+                key={entry.id}
+                entering={FadeInDown.duration(220).delay(Math.min(i, STAGGER_LIMIT) * STAGGER_MS)}
+              >
+                <Pressable
+                  onPress={() => toggle(entry.id)}
+                  style={[styles.row, isSelected && styles.rowSelected]}
+                >
+                  <Text style={styles.date}>{formatDateShort(entry.startedAt)}</Text>
+                  <HistoryBar frac={frac} metTarget={metTarget} index={i} />
+                  <Text style={styles.duration}>{formatDurationShort(actualMs)}</Text>
+                </Pressable>
+              </Animated.View>
+            );
+          })}
+
+          {selected.size > 0 && (
+            <Animated.View entering={FadeInDown.duration(160)} style={styles.removeRow}>
+              <Pressable onPress={removeSelected} hitSlop={8}>
+                <Text style={styles.removeText}>remove {selected.size} selected</Text>
+              </Pressable>
             </Animated.View>
-          );
-        })
+          )}
+        </>
       )}
     </View>
   );
@@ -101,7 +149,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 6,
+    paddingHorizontal: 8,
+    marginHorizontal: -8,
+    borderRadius: 10,
     gap: 12,
+  },
+  rowSelected: {
+    backgroundColor: 'rgba(70,162,205,0.14)',
   },
   date: {
     width: 48,
@@ -133,5 +187,16 @@ const styles = StyleSheet.create({
   // Fasts that ended before reaching their target render muted.
   barFillShort: {
     backgroundColor: 'rgba(120,140,170,0.45)',
+  },
+  removeRow: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  removeText: {
+    color: '#d9534f',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    paddingVertical: 6,
   },
 });
