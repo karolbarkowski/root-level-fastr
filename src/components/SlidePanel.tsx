@@ -34,8 +34,11 @@ const BUTTON_SIZE = 36;
  * what made the panel stall partway in.
  */
 function SlidePanel({ visible, onClose, children, widthRatio = 0.82, scrollable = true }: Props) {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const panelWidth = Math.min(width * widthRatio, 420);
+  // Landscape: slide in from the left, full height and square — the action
+  // buttons live on the right rail there and must stay reachable.
+  const isLandscape = width > height;
 
   // One shared 0→1 value drives both the slide (translateX) and backdrop fade.
   const progress = useSharedValue(0);
@@ -50,14 +53,14 @@ function SlidePanel({ visible, onClose, children, widthRatio = 0.82, scrollable 
   const backdropStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
 
   const panelStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: interpolate(progress.value, [0, 1], [panelWidth, 0]) }],
+    transform: [{ translateX: interpolate(progress.value, [0, 1], [isLandscape ? -panelWidth : panelWidth, 0]) }],
   }));
 
   // Content trails the panel slightly and fades in late, giving the surface
   // a layered, parallax feel instead of sliding in as one rigid block.
   const contentStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.value, [0.4, 1], [0, 1]),
-    transform: [{ translateX: interpolate(progress.value, [0, 1], [36, 0]) }],
+    transform: [{ translateX: interpolate(progress.value, [0, 1], [isLandscape ? -36 : 36, 0]) }],
   }));
 
   return (
@@ -67,7 +70,9 @@ function SlidePanel({ visible, onClose, children, widthRatio = 0.82, scrollable 
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
       </Animated.View>
 
-      <Animated.View style={[styles.panel, { width: panelWidth }, panelStyle]}>
+      <Animated.View
+        style={[styles.panel, isLandscape ? styles.panelLeft : styles.panelRight, { width: panelWidth }, panelStyle]}
+      >
         <Animated.View style={[styles.content, contentStyle]}>
           {scrollable ? <ScrollView>{children}</ScrollView> : children}
         </Animated.View>
@@ -95,17 +100,27 @@ const styles = StyleSheet.create({
   },
   panel: {
     position: 'absolute',
-    top: 60,
-    right: 0,
-    bottom: 60,
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 28,
-    borderBottomLeftRadius: 28,
     paddingVertical: 32,
     paddingHorizontal: 24,
     borderWidth: 1,
-    borderRightWidth: 0,
     borderColor: colors.outline,
+  },
+  // Portrait: docked right with rounded leading corners.
+  panelRight: {
+    top: 60,
+    bottom: 60,
+    right: 0,
+    borderTopLeftRadius: 28,
+    borderBottomLeftRadius: 28,
+    borderRightWidth: 0,
+  },
+  // Landscape: docked left, full height, square.
+  panelLeft: {
+    top: 0,
+    bottom: 0,
+    left: 0,
+    borderLeftWidth: 0,
   },
   closeIcon: {
     margin: 14,

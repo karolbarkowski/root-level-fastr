@@ -3,7 +3,16 @@ import { Image, StyleSheet, View } from 'react-native';
 import FastR from '../../../assets/fastr-symbol.svg';
 import React from 'react';
 
-function Logo() {
+interface Props {
+  /** Symbol only, no wordmark — for narrow spots like the landscape rail. */
+  compact?: boolean;
+}
+
+function Logo({ compact = false }: Props) {
+  if (compact) {
+    return <FastR width={56} height={56} color="#8C8C8C" />;
+  }
+
   return (
     <View style={styles.container}>
       <FastR width={80} height={80} color="#8C8C8C" />

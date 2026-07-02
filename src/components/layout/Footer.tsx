@@ -12,13 +12,15 @@ export type FooterProps = {
   onHistoryClick: () => void;
   onLegendClick: () => void;
   onBuyMeCoffeeClick: () => void;
+  /** Stack the buttons in a column — for the landscape side rail. */
+  vertical?: boolean;
 };
 
 const BUTTON_SIZE = 36;
 
 function Footer(props: FooterProps) {
   return (
-    <View style={styles.footer}>
+    <View style={[styles.footer, props.vertical && styles.footerVertical]}>
       <SoftButton onPress={props.onBuyMeCoffeeClick}>
         <Coffee style={styles.icon} width={BUTTON_SIZE} height={BUTTON_SIZE} />
       </SoftButton>
@@ -41,6 +43,11 @@ const styles = StyleSheet.create({
     width: '80%',
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  footerVertical: {
+    width: 'auto',
+    flexDirection: 'column',
+    gap: 28,
   },
   icon: {
     margin: 14,

@@ -98,7 +98,7 @@ interface Props {
  * nothing while idle.
  */
 export default function CelebrationOverlay({ trigger }: Props) {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const [run, setRun] = useState(0);
 
   useEffect(() => {
@@ -114,7 +114,10 @@ export default function CelebrationOverlay({ trigger }: Props) {
     return null;
   }
 
-  const rippleSize = Math.min(width * 0.85, 380);
+  // Size by the short screen edge, and keep the caption on-screen in
+  // landscape where half a ripple can exceed the available height.
+  const rippleSize = Math.min(Math.min(width, height) * 0.85, 380);
+  const captionOffset = Math.min(rippleSize / 2 + 36, height / 2 - 36);
 
   return (
     <View key={run} style={styles.layer} pointerEvents="none">
@@ -122,7 +125,7 @@ export default function CelebrationOverlay({ trigger }: Props) {
       {RIPPLES.map((r, i) => (
         <Ripple key={i} size={rippleSize} delay={i * RIPPLE_STAGGER_MS} color={r.color} maxOpacity={r.maxOpacity} />
       ))}
-      <Caption offset={rippleSize / 2 + 36} />
+      <Caption offset={captionOffset} />
     </View>
   );
 }

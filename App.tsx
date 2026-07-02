@@ -36,7 +36,11 @@ const HOLD_TO_END_MS = 1200;
 function Main() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const ringSize = Math.min(width - 40, height * 0.48, 380);
+  const isLandscape = width > height;
+  // Portrait sizes the ring by width; landscape by the (shorter) height.
+  const ringSize = isLandscape
+    ? Math.min(height - insets.top - insets.bottom - 24, width * 0.5, 380)
+    : Math.min(width - 40, height * 0.48, 380);
   const buttonSize = Math.round(ringSize * 0.7);
   // The tappable start/stop circle is deliberately smaller than the dial, so
   // grabbing the knob's rim to set hours can't accidentally trigger it.
@@ -192,73 +196,105 @@ function Main() {
   return (
     <View style={styles.screen}>
       <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
-      <View style={[styles.root, { paddingTop: insets.top + 60, paddingBottom: insets.bottom + 60 }]}>
-        <View style={styles.header}>
-          <Logo />
-        </View>
+      {(() => {
+        // The dial stack is orientation-independent; only the frame around
+        // it changes (column with header/footer vs. row with side rails).
+        const dialStack = (
+          <View style={styles.main}>
+            {/* All three layers share the same centered box, stacked back-to-front */}
+            <View style={styles.layer} pointerEvents="box-none">
+              <FastingRing
+                size={ringSize}
+                totalHours={ringHours}
+                elapsedHours={elapsedHours}
+                config={DEFAULT_RING_CONFIG}
+              />
+            </View>
 
-        <View style={styles.main}>
-          {/* All three layers share the same centered box, stacked back-to-front */}
-          <View style={styles.layer} pointerEvents="box-none">
-            <FastingRing
-              size={ringSize}
-              totalHours={ringHours}
-              elapsedHours={elapsedHours}
-              config={DEFAULT_RING_CONFIG}
-            />
-          </View>
+            <View style={styles.layer} pointerEvents="box-none">
+              <HoursDial value={targetHours} size={buttonSize} onChange={setHoursFromDial} disabled={isRunning} />
+            </View>
 
-          <View style={styles.layer} pointerEvents="box-none">
-            <HoursDial value={targetHours} size={buttonSize} onChange={setHoursFromDial} disabled={isRunning} />
-          </View>
-
-          <View style={styles.layer} pointerEvents="box-none">
-            <Pressable onPress={onCenterPress} onPressIn={onCenterPressIn} onPressOut={onCenterPressOut}>
-              <Animated.View
-                style={[
-                  styles.controlButtonWrapper,
-                  { width: centerSize, height: centerSize, borderRadius: centerSize / 2 },
-                  centerStyle,
-                ]}
-              >
-                {/* Radial fill that grows while the button is held to end a fast */}
+            <View style={styles.layer} pointerEvents="box-none">
+              <Pressable onPress={onCenterPress} onPressIn={onCenterPressIn} onPressOut={onCenterPressOut}>
                 <Animated.View
-                  style={[styles.holdFill, { borderRadius: centerSize / 2 }, holdFillStyle]}
-                  pointerEvents="none"
-                />
+                  style={[
+                    styles.controlButtonWrapper,
+                    { width: centerSize, height: centerSize, borderRadius: centerSize / 2 },
+                    centerStyle,
+                  ]}
+                >
+                  {/* Radial fill that grows while the button is held to end a fast */}
+                  <Animated.View
+                    style={[styles.holdFill, { borderRadius: centerSize / 2 }, holdFillStyle]}
+                    pointerEvents="none"
+                  />
 
-                {isRunning ? (
-                  <Animated.View
-                    key="running"
-                    style={styles.centerContent}
-                    entering={FadeIn.duration(220)}
-                    exiting={FadeOut.duration(120)}
-                  >
-                    <Text style={styles.elapsedLabel}>FASTING</Text>
-                    <Text style={styles.elapsedTime}>{formatElapsed(elapsedMs)}</Text>
-                    <Text style={styles.endHint}>hold to end</Text>
-                  </Animated.View>
-                ) : (
-                  <Animated.View
-                    key="idle"
-                    style={styles.centerContent}
-                    entering={FadeIn.duration(220)}
-                    exiting={FadeOut.duration(120)}
-                  >
-                    <Text style={styles.controlButtonLabel}>HRS</Text>
-                    <DigitalNumber value={targetHours} width={70} height={50} />
-                    <Text style={styles.controlButtonLabel}>START</Text>
-                  </Animated.View>
-                )}
-              </Animated.View>
-            </Pressable>
+                  {isRunning ? (
+                    <Animated.View
+                      key="running"
+                      style={styles.centerContent}
+                      entering={FadeIn.duration(220)}
+                      exiting={FadeOut.duration(120)}
+                    >
+                      <Text style={styles.elapsedLabel}>FASTING</Text>
+                      <Text style={styles.elapsedTime}>{formatElapsed(elapsedMs)}</Text>
+                      <Text style={styles.endHint}>hold to end</Text>
+                    </Animated.View>
+                  ) : (
+                    <Animated.View
+                      key="idle"
+                      style={styles.centerContent}
+                      entering={FadeIn.duration(220)}
+                      exiting={FadeOut.duration(120)}
+                    >
+                      <Text style={styles.controlButtonLabel}>HRS</Text>
+                      <DigitalNumber value={targetHours} width={70} height={50} />
+                      <Text style={styles.controlButtonLabel}>START</Text>
+                    </Animated.View>
+                  )}
+                </Animated.View>
+              </Pressable>
+            </View>
           </View>
-        </View>
+        );
 
-        <View style={styles.footer}>
-          <Footer onBuyMeCoffeeClick={openCoffee} onHistoryClick={openHistory} onLegendClick={openLegend} />
-        </View>
-      </View>
+        if (isLandscape) {
+          return (
+            <View
+              style={[
+                styles.rootLandscape,
+                {
+                  paddingTop: insets.top + 12,
+                  paddingBottom: insets.bottom + 12,
+                  paddingLeft: insets.left + 16,
+                  paddingRight: insets.right + 16,
+                },
+              ]}
+            >
+              <View style={styles.railLeft}>
+                <Logo compact />
+              </View>
+              {dialStack}
+              <View style={styles.railRight}>
+                <Footer vertical onBuyMeCoffeeClick={openCoffee} onHistoryClick={openHistory} onLegendClick={openLegend} />
+              </View>
+            </View>
+          );
+        }
+
+        return (
+          <View style={[styles.root, { paddingTop: insets.top + 60, paddingBottom: insets.bottom + 60 }]}>
+            <View style={styles.header}>
+              <Logo />
+            </View>
+            {dialStack}
+            <View style={styles.footer}>
+              <Footer onBuyMeCoffeeClick={openCoffee} onHistoryClick={openHistory} onLegendClick={openLegend} />
+            </View>
+          </View>
+        );
+      })()}
 
       <SlidePanel visible={openPanel === 'history'} onClose={closePanel} scrollable={false}>
         {historyPanel}
@@ -294,6 +330,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: colors.bg,
     paddingHorizontal: 20,
+  },
+  // Landscape: side rails (logo left, actions right) flanking the dial.
+  // Equal rail widths keep the ring optically centered on the screen.
+  rootLandscape: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: colors.bg,
+  },
+  railLeft: {
+    width: 88,
+    alignItems: 'center',
+    paddingTop: 8,
+  },
+  railRight: {
+    width: 88,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
     width: '100%',
