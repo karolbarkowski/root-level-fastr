@@ -1,107 +1,90 @@
 import Animated, {
   Easing,
-  FadeIn,
-  FadeOut,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
   withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { appFont, colors } from '../theme';
 
-// A celebratory burst shown when a fast is ended: confetti rains down while a
-// "Good job!" badge springs in, then the whole thing fades itself out.
-const PIECE_COUNT = 70;
-const DURATION_MS = 2600;
+// A quiet "ember pulse" when a fast is ended: thin rings ripple out from the
+// timer while the screen warms with a faint accent tint and a small caption
+// surfaces below the dial, then everything fades and the overlay unmounts.
+const DURATION_MS = 2200;
+const RIPPLE_MS = 1100;
+const RIPPLE_STAGGER_MS = 220;
 
-// Ember-and-monochrome confetti to match the dark flat palette.
-const CONFETTI_COLORS = ['#FF6B1A', '#FF9558', '#FFD166', '#ECECEC', '#FFFFFF', '#8C8C8C'];
+// One ring per entry: color and peak opacity, launched STAGGER apart.
+const RIPPLES = [
+  { color: colors.accent, maxOpacity: 0.55 },
+  { color: '#FFFFFF', maxOpacity: 0.22 },
+  { color: colors.accent, maxOpacity: 0.35 },
+];
 
-interface PieceProps {
-  index: number;
-  screenW: number;
-  screenH: number;
+interface RippleProps {
+  size: number;
+  delay: number;
+  color: string;
+  maxOpacity: number;
 }
 
-/** A single confetti rectangle that falls, drifts and tumbles on mount. */
-function ConfettiPiece({ index, screenW, screenH }: PieceProps) {
-  // Deterministic pseudo-random spread so pieces don't all share a path.
-  // (Math.random is unavailable in worklets / some harnesses; derive from index.)
-  const seed = useMemo(() => {
-    const r = (n: number) => {
-      const x = Math.sin(index * 9301 + n * 49297) * 233280;
-      return x - Math.floor(x);
-    };
-    return {
-      startX: r(1) * screenW,
-      drift: (r(2) - 0.5) * 160,
-      delay: r(3) * 500,
-      duration: DURATION_MS - 600 + r(4) * 600,
-      size: 7 + r(5) * 8,
-      color: CONFETTI_COLORS[Math.floor(r(6) * CONFETTI_COLORS.length)],
-      spin: (r(7) - 0.5) * 12,
-      round: r(8) > 0.7,
-    };
-  }, [index, screenW]);
-
-  const progress = useSharedValue(0);
+/** A thin circle that expands outward while fading away. */
+function Ripple({ size, delay, color, maxOpacity }: RippleProps) {
+  const p = useSharedValue(0);
 
   useEffect(() => {
-    progress.value = withDelay(seed.delay, withTiming(1, { duration: seed.duration, easing: Easing.in(Easing.quad) }));
-  }, [progress, seed]);
+    p.value = withDelay(delay, withTiming(1, { duration: RIPPLE_MS, easing: Easing.out(Easing.quad) }));
+  }, [p, delay]);
 
   const style = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: seed.drift * progress.value },
-      { translateY: -40 + (screenH + 80) * progress.value },
-      { rotate: `${seed.spin * progress.value * Math.PI}rad` },
-    ],
-    // Fade out over the last fifth of the fall.
-    opacity: progress.value < 0.8 ? 1 : 1 - (progress.value - 0.8) / 0.2,
+    opacity: maxOpacity * (1 - p.value),
+    transform: [{ scale: 0.3 + 1.1 * p.value }],
   }));
 
   return (
     <Animated.View
-      style={[
-        styles.piece,
-        {
-          left: seed.startX,
-          width: seed.size,
-          height: seed.size * 1.6,
-          backgroundColor: seed.color,
-          borderRadius: seed.round ? seed.size : 2,
-        },
-        style,
-      ]}
+      style={[styles.ripple, { width: size, height: size, borderRadius: size / 2, borderColor: color }, style]}
     />
   );
 }
 
-/** The springy "Good job!" badge in the center of the screen. */
-function Badge() {
-  const scale = useSharedValue(0);
+/** "FAST COMPLETE" — fades in below the dial after the first ripple leads. */
+function Caption({ offset }: { offset: number }) {
+  const p = useSharedValue(0);
 
   useEffect(() => {
-    scale.value = withSequence(
-      withSpring(1, { damping: 9, stiffness: 160 }),
-      withDelay(1400, withTiming(0.9, { duration: 300 })),
+    p.value = withSequence(
+      withDelay(250, withTiming(1, { duration: 350, easing: Easing.out(Easing.quad) })),
+      withDelay(800, withTiming(0, { duration: 450, easing: Easing.in(Easing.quad) })),
     );
-  }, [scale]);
+  }, [p]);
 
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const style = useAnimatedStyle(() => ({
+    opacity: p.value,
+    transform: [{ translateY: offset + 10 * (1 - p.value) }],
+  }));
 
-  return (
-    <Animated.View style={[styles.badge, style]}>
-      <Text style={styles.badgeEmoji}>🎉</Text>
-      <Text style={styles.badgeTitle}>Good job!</Text>
-      <Text style={styles.badgeSubtitle}>Fast complete</Text>
-    </Animated.View>
-  );
+  return <Animated.Text style={[styles.caption, style]}>FAST COMPLETE</Animated.Text>;
+}
+
+/** A faint full-screen ember tint that blooms in and dissipates. */
+function Bloom() {
+  const p = useSharedValue(0);
+
+  useEffect(() => {
+    p.value = withSequence(
+      withTiming(1, { duration: 300, easing: Easing.out(Easing.quad) }),
+      withTiming(0, { duration: 1300, easing: Easing.in(Easing.quad) }),
+    );
+  }, [p]);
+
+  const style = useAnimatedStyle(() => ({ opacity: 0.06 * p.value }));
+
+  return <Animated.View style={[StyleSheet.absoluteFill, styles.bloom, style]} pointerEvents="none" />;
 }
 
 interface Props {
@@ -110,12 +93,12 @@ interface Props {
 }
 
 /**
- * Full-screen, non-interactive celebration. Mounts its confetti + badge when
- * `trigger` changes, then unmounts itself after the burst finishes so it costs
+ * Full-screen, non-interactive completion pulse. Mounts when `trigger`
+ * changes, then unmounts itself after the pulse finishes so it costs
  * nothing while idle.
  */
 export default function CelebrationOverlay({ trigger }: Props) {
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const [run, setRun] = useState(0);
 
   useEffect(() => {
@@ -131,32 +114,21 @@ export default function CelebrationOverlay({ trigger }: Props) {
     return null;
   }
 
+  const rippleSize = Math.min(width * 0.85, 380);
+
   return (
-    <Animated.View
-      key={run}
-      style={StyleSheet.absoluteFill}
-      pointerEvents="none"
-      entering={FadeIn.duration(120)}
-      exiting={FadeOut.duration(400)}
-    >
-      <View style={StyleSheet.absoluteFill}>
-        {Array.from({ length: PIECE_COUNT }, (_, i) => (
-          <ConfettiPiece key={i} index={i} screenW={width} screenH={height} />
-        ))}
-      </View>
-      <View style={styles.badgeLayer} pointerEvents="none">
-        <Badge />
-      </View>
-    </Animated.View>
+    <View key={run} style={styles.layer} pointerEvents="none">
+      <Bloom />
+      {RIPPLES.map((r, i) => (
+        <Ripple key={i} size={rippleSize} delay={i * RIPPLE_STAGGER_MS} color={r.color} maxOpacity={r.maxOpacity} />
+      ))}
+      <Caption offset={rippleSize / 2 + 36} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  piece: {
-    position: 'absolute',
-    top: 0,
-  },
-  badgeLayer: {
+  layer: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -165,32 +137,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badge: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    paddingVertical: 22,
-    paddingHorizontal: 40,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors.outline,
+  bloom: {
+    backgroundColor: colors.accent,
   },
-  badgeEmoji: {
-    fontSize: 40,
-    marginBottom: 6,
+  ripple: {
+    position: 'absolute',
+    borderWidth: 1.5,
   },
-  badgeTitle: {
+  caption: {
+    position: 'absolute',
     fontFamily: appFont,
-    fontSize: 26,
-    fontWeight: '800',
-    color: colors.accent,
-    letterSpacing: 0.5,
-  },
-  badgeSubtitle: {
-    fontFamily: appFont,
-    marginTop: 4,
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textSecondary,
-    letterSpacing: 1,
+    letterSpacing: 3,
+    color: colors.accent,
   },
 });
