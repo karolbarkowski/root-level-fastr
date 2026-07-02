@@ -14,8 +14,13 @@ export async function loadHistory(): Promise<FastEntry[]> {
   }
 }
 
+// Save functions swallow failures: callers fire-and-forget, and a failed
+// write must not surface as an unhandled rejection (state stays usable,
+// it just won't survive a restart).
 export async function saveHistory(entries: FastEntry[]): Promise<void> {
-  await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+  try {
+    await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+  } catch {}
 }
 
 export async function loadActiveFast(): Promise<ActiveFast | null> {
@@ -28,9 +33,13 @@ export async function loadActiveFast(): Promise<ActiveFast | null> {
 }
 
 export async function saveActiveFast(fast: ActiveFast): Promise<void> {
-  await AsyncStorage.setItem(ACTIVE_KEY, JSON.stringify(fast));
+  try {
+    await AsyncStorage.setItem(ACTIVE_KEY, JSON.stringify(fast));
+  } catch {}
 }
 
 export async function clearActiveFast(): Promise<void> {
-  await AsyncStorage.removeItem(ACTIVE_KEY);
+  try {
+    await AsyncStorage.removeItem(ACTIVE_KEY);
+  } catch {}
 }

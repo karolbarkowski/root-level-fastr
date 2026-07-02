@@ -6,17 +6,11 @@ export interface Breakpoint {
   hoursIn: number;
   /** SVG component rendered as a marker chip on the ring. */
   icon: FC<SvgProps>;
-  /** Reserved for future use (haptics / animations / notifications). */
+  /** Stable id; keys the chip and looks up the legend copy. */
   effectCode: string;
-  /** Ring stroke color used from this point onwards. */
-  colorCode: string;
 }
 
 export interface RingConfig {
-  /** Color of the ring before the first breakpoint. */
-  baseColor: string;
-  /** Color used to grey-out the portion of the fast that already passed. */
-  elapsedColor: string;
   breakpoints: Breakpoint[];
 }
 

@@ -70,7 +70,7 @@ interface SevenSegmentDigitProps {
   inactiveColor: string;
 }
 
-export const SevenSegmentDigit = ({ digit, x = 0, activeColor, inactiveColor }: SevenSegmentDigitProps) => {
+const SevenSegmentDigit = ({ digit, x = 0, activeColor, inactiveColor }: SevenSegmentDigitProps) => {
   const active = DIGITS[digit];
 
   return (

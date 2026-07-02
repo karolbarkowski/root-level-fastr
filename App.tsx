@@ -7,7 +7,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { DEFAULT_RING_CONFIG, DEFAULT_TARGET_HOURS, HISTORY_LIMIT } from './src/config';
+import { DEFAULT_RING_CONFIG, DEFAULT_TARGET_HOURS, HISTORY_LIMIT, HOUR_MS } from './src/config';
 import { Pressable, StatusBar, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,8 +28,6 @@ import { formatElapsed } from './src/utils/format';
 import { scheduleOnRN } from 'react-native-worklets';
 
 type PanelKey = 'history' | 'legend' | 'coffee';
-
-const HOUR_MS = 3600_000;
 
 // Ending a fast requires holding the center button this long while a radial
 // fill confirms the intent — no native popup, no accidental taps.
@@ -113,20 +111,23 @@ function Main() {
   }, [activeFast, history]);
 
   // Permanently drop the given history entries (from the history panel).
-  const deleteEntries = useCallback((ids: string[]) => {
-    const remove = new Set(ids);
-    setHistory(prev => {
-      const next = prev.filter(e => !remove.has(e.id));
+  const deleteEntries = useCallback(
+    (ids: string[]) => {
+      const remove = new Set(ids);
+      const next = history.filter(e => !remove.has(e.id));
+      setHistory(next);
       saveHistory(next);
-      return next;
-    });
-  }, []);
+    },
+    [history],
+  );
 
-  // Stable handlers so the memoized footer skips per-second clock re-renders.
-  const openCoffee = () => setOpenPanel('coffee');
-  const openHistory = () => setOpenPanel('history');
-  const openLegend = () => setOpenPanel('legend');
-  const closePanel = () => setOpenPanel(null);
+  // Stable handlers: new identities each render would defeat React.memo on
+  // Footer and the three SlidePanels, re-committing into them on every
+  // one-second clock tick (and mid-slide, which interrupts the animation).
+  const openCoffee = useCallback(() => setOpenPanel('coffee'), []);
+  const openHistory = useCallback(() => setOpenPanel('history'), []);
+  const openLegend = useCallback(() => setOpenPanel('legend'), []);
+  const closePanel = useCallback(() => setOpenPanel(null), []);
 
   // Each panel gets its own permanently-mounted SlidePanel below, so opening
   // one only animates a transform — nothing mounts or swaps mid-slide. The
@@ -343,7 +344,7 @@ const styles = StyleSheet.create({
   controlButtonLabel: {
     fontFamily: appFont,
     fontSize: 14,
-    fontWeight: 800,
+    fontWeight: '800',
     color: colors.textPrimary,
   },
 

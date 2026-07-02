@@ -13,11 +13,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { formatDateShort, formatDurationShort } from '../../utils/format';
 
 import { FastEntry } from '../../types';
-import { HISTORY_LIMIT } from '../../config';
+import { HISTORY_LIMIT, HOUR_MS } from '../../config';
 import HistoryIcon from '../../../assets/icons/history.svg';
 import { appFont, colors } from '../../theme';
-
-const HOUR_MS = 3600_000;
 
 // Stagger the first few rows as the panel opens; later rows (below the fold)
 // appear together so long histories don't take seconds to settle.

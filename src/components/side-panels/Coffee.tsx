@@ -28,7 +28,7 @@ export default function Coffee() {
       </View>
 
       <View style={styles.buttonWrap}>
-        <SoftButton onPress={() => Linking.openURL(BUY_ME_A_COFFEE_URL)} radius={22}>
+        <SoftButton onPress={() => Linking.openURL(BUY_ME_A_COFFEE_URL).catch(() => {})} radius={22}>
           <Text style={styles.buttonLabel}>Buy me a coffee</Text>
         </SoftButton>
       </View>
