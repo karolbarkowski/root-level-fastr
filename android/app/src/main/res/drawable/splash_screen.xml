@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Splash window background: the app's periwinkle backdrop with the FastR logo
+  Splash window background: the app's dark backdrop with the FastR logo
   centered. Shown by SplashTheme until the React view takes over.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
+    <!-- 130dp ≈ one third of typical 360–410dp screen widths (a static
+         window background can't size relative to the screen). The vector
+         scales crisply, unlike the small launcher PNGs. -->
     <item
-        android:width="432dp"
-        android:height="432dp"
-        android:gravity="center">
-        <bitmap
-            android:src="@mipmap/ic_launcher_foreground"
-            android:gravity="center" />
-    </item>
+        android:width="130dp"
+        android:height="130dp"
+        android:gravity="center"
+        android:drawable="@drawable/splash_logo" />
 </layer-list>
