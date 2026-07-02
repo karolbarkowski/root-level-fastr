@@ -1,4 +1,4 @@
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { PanResponder, StyleSheet, View } from 'react-native';
 import React, { useEffect, useRef } from 'react';
 
@@ -48,6 +48,22 @@ function HoursDial({ value, onChange, size = 132, disabled = false }: Props) {
   const grabScale = useSharedValue(1);
   const grabStyle = useAnimatedStyle(() => ({ transform: [{ scale: grabScale.value }] }));
 
+  // While a finger is on the knob the dot tracks the fractional drag angle
+  // 1:1 (any easing here reads as lag); on release it eases onto the nearest
+  // hour detent. The timing animation only drives non-drag value changes.
+  const rotation = useSharedValue(value * DEGREES_PER_HOUR);
+  const draggingRef = useRef(false);
+  useEffect(() => {
+    if (draggingRef.current) {
+      return; // the drag handlers below drive rotation directly
+    }
+    rotation.value = withTiming(value * DEGREES_PER_HOUR, {
+      duration: 160,
+      easing: Easing.out(Easing.quad),
+    });
+  }, [value, rotation]);
+  const rotationStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${rotation.value}deg` }] }));
+
   const angleOf = (px: number, py: number) =>
     (Math.atan2(py - center.current.y, px - center.current.x) * 180) / Math.PI;
 
@@ -56,6 +72,7 @@ function HoursDial({ value, onChange, size = 132, disabled = false }: Props) {
       onStartShouldSetPanResponder: () => !disabledRef.current,
       onMoveShouldSetPanResponder: () => !disabledRef.current,
       onPanResponderGrant: (_e, g) => {
+        draggingRef.current = true;
         drag.current.lastAngle = angleOf(g.x0, g.y0);
         drag.current.hours = valueRef.current;
         grabScale.value = withTiming(1.03, { duration: 120 });
@@ -70,16 +87,29 @@ function HoursDial({ value, onChange, size = 132, disabled = false }: Props) {
         }
         drag.current.lastAngle = a;
         drag.current.hours = clamp(drag.current.hours + delta / DEGREES_PER_HOUR, MIN, MAX);
+        // Track the finger 1:1 with the fractional angle — no easing mid-drag.
+        rotation.value = drag.current.hours * DEGREES_PER_HOUR;
         const next = Math.round(drag.current.hours);
         if (next !== valueRef.current) {
           onChangeRef.current(next);
         }
       },
       onPanResponderRelease: () => {
+        draggingRef.current = false;
         grabScale.value = withSpring(1, { damping: 16, stiffness: 220 });
+        // Settle onto the committed hour detent.
+        rotation.value = withTiming(valueRef.current * DEGREES_PER_HOUR, {
+          duration: 160,
+          easing: Easing.out(Easing.quad),
+        });
       },
       onPanResponderTerminate: () => {
+        draggingRef.current = false;
         grabScale.value = withSpring(1, { damping: 16, stiffness: 220 });
+        rotation.value = withTiming(valueRef.current * DEGREES_PER_HOUR, {
+          duration: 160,
+          easing: Easing.out(Easing.quad),
+        });
       },
     }),
   ).current;
@@ -103,9 +133,9 @@ function HoursDial({ value, onChange, size = 132, disabled = false }: Props) {
     >
       <View style={[styles.disc, { borderRadius: radius }]}>
         {/* Rotating layer carrying the position dot */}
-        <View style={[StyleSheet.absoluteFill, { transform: [{ rotate: `${value * DEGREES_PER_HOUR}deg` }] }]}>
+        <Animated.View style={[StyleSheet.absoluteFill, rotationStyle]}>
           <View style={[styles.dot, { top: DOT_TOP, left: (size - DOT_SIZE) / 2 }]} />
-        </View>
+        </Animated.View>
       </View>
     </Animated.View>
   );

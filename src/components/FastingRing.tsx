@@ -1,4 +1,11 @@
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import React, { FC, ReactNode, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
@@ -40,17 +47,31 @@ function polar(cx: number, cy: number, r: number, deg: number) {
 interface ChipProps {
   icon: FC<SvgProps>;
   reached: boolean;
-  x: number;
-  y: number;
+  /** Ring center and radius the chip is seated on. */
+  cx: number;
+  cy: number;
+  r: number;
+  /** Target screen angle (degrees); the chip glides along the arc to it. */
+  deg: number;
 }
 
 /**
  * A milestone icon chip that "pops" (overshoot scale) the moment the fast
  * crosses its breakpoint. Restored fasts mount already-reached chips at rest.
+ *
+ * When the dial rescales the gauge, the chip's angle is animated (not its
+ * x/y), so it slides along the ring's arc instead of cutting across it.
  */
-const MilestoneChip = React.memo(({ icon: Icon, reached, x, y }: ChipProps) => {
+const MilestoneChip = React.memo(({ icon: Icon, reached, cx, cy, r, deg }: ChipProps) => {
   const scale = useSharedValue(1);
+  const angle = useSharedValue(deg);
   const prevReached = useRef(reached);
+
+  useEffect(() => {
+    // Short enough that rapid dial steps read as one continuous glide along
+    // the arc instead of the chip visibly trailing the finger.
+    angle.value = withTiming(deg, { duration: 100, easing: Easing.out(Easing.quad) });
+  }, [deg, angle]);
 
   useEffect(() => {
     if (reached && !prevReached.current) {
@@ -62,17 +83,19 @@ const MilestoneChip = React.memo(({ icon: Icon, reached, x, y }: ChipProps) => {
     prevReached.current = reached;
   }, [reached, scale]);
 
-  const pop = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const chipStyle = useAnimatedStyle(() => {
+    const rad = (angle.value * Math.PI) / 180;
+    return {
+      transform: [
+        { translateX: cx + r * Math.cos(rad) - MARKER_SIZE / 2 },
+        { translateY: cy + r * Math.sin(rad) - MARKER_SIZE / 2 },
+        { scale: scale.value },
+      ],
+    };
+  });
 
   return (
-    <Animated.View
-      style={[
-        styles.marker,
-        reached && styles.markerReached,
-        { left: x - MARKER_SIZE / 2, top: y - MARKER_SIZE / 2 },
-        pop,
-      ]}
-    >
+    <Animated.View style={[styles.marker, reached && styles.markerReached, chipStyle]}>
       <Icon width={MARKER_ICON_SIZE} height={MARKER_ICON_SIZE} />
     </Animated.View>
   );
@@ -154,9 +177,10 @@ function FastingRing({ size, totalHours, elapsedHours, config, children }: Props
       {/* Milestone icon chips, seated on the tick band */}
       {milestones.map(bp => {
         const deg = START_ANGLE + SWEEP * bp.frac;
-        const p = polar(cx, cy, rMarker, deg);
         const reached = bp.frac <= progress + 1e-6;
-        return <MilestoneChip key={bp.effectCode} icon={bp.icon} reached={reached} x={p.x} y={p.y} />;
+        return (
+          <MilestoneChip key={bp.effectCode} icon={bp.icon} reached={reached} cx={cx} cy={cy} r={rMarker} deg={deg} />
+        );
       })}
 
       {/* Center content */}
@@ -172,6 +196,8 @@ export default React.memo(FastingRing);
 const styles = StyleSheet.create({
   marker: {
     position: 'absolute',
+    left: 0,
+    top: 0,
     width: MARKER_SIZE,
     height: MARKER_SIZE,
     borderRadius: MARKER_SIZE / 2,
