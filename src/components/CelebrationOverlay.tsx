@@ -19,7 +19,8 @@ import { colors } from '../theme';
 const PIECE_COUNT = 70;
 const DURATION_MS = 2600;
 
-const CONFETTI_COLORS = ['#46a2cd', '#5BC2F0', '#9AD4F0', '#7ED957', '#FFD166', '#EF8354', '#C879E8'];
+// Ember-and-monochrome confetti to match the dark flat palette.
+const CONFETTI_COLORS = ['#FF6B1A', '#FF9558', '#FFD166', '#ECECEC', '#FFFFFF', '#8C8C8C'];
 
 interface PieceProps {
   index: number;

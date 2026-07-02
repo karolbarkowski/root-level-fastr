@@ -12,6 +12,11 @@ interface Props {
   children?: ReactNode;
   /** Panel width as a fraction of the screen, capped at 420px. */
   widthRatio?: number;
+  /**
+   * Wrap children in a ScrollView (default). Pass false when the content
+   * manages its own scrolling, e.g. to pin a header/footer inside the panel.
+   */
+  scrollable?: boolean;
 }
 
 const OPEN_DURATION = 240;
@@ -28,7 +33,7 @@ const BUTTON_SIZE = 36;
  * mid-animation interrupt Reanimated's UI-thread timing on Fabric, which is
  * what made the panel stall partway in.
  */
-function SlidePanel({ visible, onClose, children, widthRatio = 0.82 }: Props) {
+function SlidePanel({ visible, onClose, children, widthRatio = 0.82, scrollable = true }: Props) {
   const { width } = useWindowDimensions();
   const panelWidth = Math.min(width * widthRatio, 420);
 
@@ -64,7 +69,7 @@ function SlidePanel({ visible, onClose, children, widthRatio = 0.82 }: Props) {
 
       <Animated.View style={[styles.panel, { width: panelWidth }, panelStyle]}>
         <Animated.View style={[styles.content, contentStyle]}>
-          <ScrollView>{children}</ScrollView>
+          {scrollable ? <ScrollView>{children}</ScrollView> : children}
         </Animated.View>
 
         <View style={styles.center}>

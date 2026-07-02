@@ -6,6 +6,9 @@ import ImmuneReset from '../assets/icons/immuneReset.svg';
 import InsulinDrop from '../assets/icons/insulinDrop.svg';
 import { RingConfig } from './types';
 
+// Only this many most-recent fasts are kept in history/storage.
+export const HISTORY_LIMIT = 30;
+
 /**
  * Default fasting milestones, roughly matching the screenshot.
  * Tweak freely — the ring re-renders purely from this config.

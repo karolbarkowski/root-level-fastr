@@ -7,7 +7,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { DEFAULT_RING_CONFIG, DEFAULT_TARGET_HOURS } from './src/config';
+import { DEFAULT_RING_CONFIG, DEFAULT_TARGET_HOURS, HISTORY_LIMIT } from './src/config';
 import { Pressable, StatusBar, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,7 +60,7 @@ function Main() {
         setActiveFast(active);
         setTargetHours(active.targetHours);
       }
-      setHistory(entries);
+      setHistory(entries.slice(0, HISTORY_LIMIT));
     })();
   }, []);
 
@@ -104,7 +104,7 @@ function Main() {
       endedAt: Date.now(),
       targetHours: activeFast.targetHours,
     };
-    const next = [entry, ...history];
+    const next = [entry, ...history].slice(0, HISTORY_LIMIT);
     setHistory(next);
     setActiveFast(null);
     setCelebrateAt(Date.now());
@@ -259,7 +259,7 @@ function Main() {
         </View>
       </View>
 
-      <SlidePanel visible={openPanel === 'history'} onClose={closePanel}>
+      <SlidePanel visible={openPanel === 'history'} onClose={closePanel} scrollable={false}>
         {historyPanel}
       </SlidePanel>
       <SlidePanel visible={openPanel === 'legend'} onClose={closePanel}>

@@ -1,4 +1,3 @@
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Linking, StyleSheet, Text, View } from 'react-native';
 
 import { BUY_ME_A_COFFEE_URL } from '../../config';
@@ -12,27 +11,27 @@ const ICON_SIZE = 44;
 export default function Coffee() {
   return (
     <View style={styles.container}>
-      <Animated.View entering={FadeInDown.duration(220)} style={styles.iconWrap}>
+      <View style={styles.iconWrap}>
         <CoffeeIcon width={ICON_SIZE} height={ICON_SIZE} color={colors.textPrimary} />
-      </Animated.View>
+      </View>
 
-      <Animated.View entering={FadeInDown.duration(220).delay(40)}>
+      <View>
         <Text style={styles.heading}>Enjoying FastR?</Text>
         <Text style={styles.body}>
-          FastR is free, has no ads and no tracking — just a timer that stays out of your way. It's built and
-          maintained by one person in their spare time.
+          FastR is free, has no ads and no tracking — just a timer that stays out of your way. It's built and maintained
+          by one person in their spare time.
         </Text>
         <Text style={styles.body}>
           If it helps you stick to your fasts, you can fuel the next update with a coffee. It genuinely makes a
           difference.
         </Text>
-      </Animated.View>
+      </View>
 
-      <Animated.View entering={FadeInDown.duration(220).delay(80)} style={styles.buttonWrap}>
+      <View style={styles.buttonWrap}>
         <SoftButton onPress={() => Linking.openURL(BUY_ME_A_COFFEE_URL)} radius={22}>
           <Text style={styles.buttonLabel}>Buy me a coffee</Text>
         </SoftButton>
-      </Animated.View>
+      </View>
     </View>
   );
 }
