@@ -1,10 +1,10 @@
 import { Linking, StyleSheet, Text, View } from 'react-native';
+import { appFont, colors } from '../../theme';
 
 import { BUY_ME_A_COFFEE_URL } from '../../config';
 import CoffeeIcon from '../../../assets/icons/coffee.svg';
 import React from 'react';
 import SoftButton from '../SoftButton';
-import { colors } from '../../theme';
 
 const ICON_SIZE = 44;
 
@@ -22,9 +22,9 @@ export default function Coffee() {
           by one person in their spare time.
         </Text>
         <Text style={styles.body}>
-          If it helps you stick to your fasts, you can fuel the next update with a coffee. It genuinely makes a
-          difference.
+          If it helps you stick to your fasts, you can fuel the next update with a coffee.
         </Text>
+        <Text style={styles.body}>It genuinely makes a difference.</Text>
       </View>
 
       <View style={styles.buttonWrap}>
@@ -46,6 +46,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   heading: {
+    fontFamily: appFont,
     fontSize: 18,
     fontWeight: '700',
     color: colors.textPrimary,
@@ -53,6 +54,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   body: {
+    fontFamily: appFont,
     fontSize: 14,
     lineHeight: 20,
     color: colors.textSecondary,
@@ -64,6 +66,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   buttonLabel: {
+    fontFamily: appFont,
     fontSize: 15,
     fontWeight: '700',
     color: colors.accent,

@@ -23,7 +23,7 @@ import HoursDial from './src/components/HoursDial';
 import Legend from './src/components/side-panels/Legend';
 import Logo from './src/components/layout/Logo';
 import SlidePanel from './src/components/SlidePanel';
-import { colors } from './src/theme';
+import { appFont, colors } from './src/theme';
 import { formatElapsed } from './src/utils/format';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -341,18 +341,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   controlButtonLabel: {
+    fontFamily: appFont,
     fontSize: 14,
     fontWeight: 800,
     color: colors.textPrimary,
   },
 
   elapsedLabel: {
+    fontFamily: appFont,
     color: colors.textSecondary,
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 2,
   },
   elapsedTime: {
+    fontFamily: appFont,
     color: colors.textPrimary,
     fontSize: 20,
     fontWeight: '800',
@@ -360,6 +363,7 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   endHint: {
+    fontFamily: appFont,
     color: colors.textSecondary,
     fontSize: 12,
   },

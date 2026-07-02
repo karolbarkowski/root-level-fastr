@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { DEFAULT_RING_CONFIG } from '../../config';
 import React from 'react';
-import { colors } from '../../theme';
+import { appFont, colors } from '../../theme';
 
 const EFFECT_COPY: Record<string, { name: string; description: string }> = {
   bloodSugarDrop: {
@@ -86,12 +86,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   name: {
+    fontFamily: appFont,
     fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,
     flexShrink: 1,
   },
   hours: {
+    fontFamily: appFont,
     fontSize: 13,
     fontWeight: '700',
     color: colors.accent,
@@ -99,6 +101,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   description: {
+    fontFamily: appFont,
     fontSize: 13,
     lineHeight: 18,
     color: colors.textSecondary,

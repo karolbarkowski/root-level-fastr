@@ -1,3 +1,13 @@
+import { Platform } from 'react-native';
+
+/**
+ * Base font for all Text. Pinned to Roboto ('sans-serif') on Android because
+ * OEM replacement system fonts (MIUI's MiSans and similar) render synthesized
+ * bold wider than React Native measures it, clipping trailing characters
+ * ("Autophagy" → "Autophag", "16h" → "16").
+ */
+export const appFont = Platform.select({ android: 'sans-serif' });
+
 /**
  * Flat dark palette.
  *

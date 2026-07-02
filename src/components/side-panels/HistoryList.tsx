@@ -1,6 +1,8 @@
 import Animated, {
   Easing,
   FadeInDown,
+  LinearTransition,
+  SlideOutRight,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -13,7 +15,7 @@ import { formatDateShort, formatDurationShort } from '../../utils/format';
 import { FastEntry } from '../../types';
 import { HISTORY_LIMIT } from '../../config';
 import HistoryIcon from '../../../assets/icons/history.svg';
-import { colors } from '../../theme';
+import { appFont, colors } from '../../theme';
 
 const HOUR_MS = 3600_000;
 
@@ -21,6 +23,10 @@ const HOUR_MS = 3600_000;
 // appear together so long histories don't take seconds to settle.
 const STAGGER_MS = 40;
 const STAGGER_LIMIT = 8;
+
+// Selection indent / accent-bar width the row animates toward.
+const SELECT_PAD = 14;
+const SELECT_BORDER = 3;
 
 interface BarProps {
   /** Bar length as a fraction of the longest fast on record. */
@@ -51,6 +57,53 @@ function HistoryBar({ frac, metTarget, index }: BarProps) {
   );
 }
 
+interface RowProps {
+  entry: FastEntry;
+  index: number;
+  frac: number;
+  metTarget: boolean;
+  selected: boolean;
+  onToggle: (id: string) => void;
+}
+
+/**
+ * One fast: duration leads, an ember dot marks a met target, the bar below
+ * scales against the longest fast. Selecting eases the row rightward behind
+ * a growing accent bar; deletion slides it off to the right while the
+ * remaining rows close the gap (layout transition).
+ */
+function HistoryRow({ entry, index, frac, metTarget, selected, onToggle }: RowProps) {
+  const sel = useSharedValue(selected ? 1 : 0);
+
+  useEffect(() => {
+    sel.value = withTiming(selected ? 1 : 0, { duration: 180, easing: Easing.out(Easing.quad) });
+  }, [selected, sel]);
+
+  const selectStyle = useAnimatedStyle(() => ({
+    paddingLeft: SELECT_PAD * sel.value,
+    borderLeftWidth: SELECT_BORDER * sel.value,
+  }));
+
+  return (
+    <Animated.View
+      entering={FadeInDown.duration(220).delay(Math.min(index, STAGGER_LIMIT) * STAGGER_MS)}
+      exiting={SlideOutRight.duration(240)}
+      layout={LinearTransition.duration(240)}
+    >
+      <Pressable onPress={() => onToggle(entry.id)}>
+        <Animated.View style={[styles.row, selectStyle]}>
+          <View style={styles.rowHeader}>
+            <Text style={styles.duration}>{formatDurationShort(entry.endedAt - entry.startedAt)}</Text>
+            {metTarget && <View style={styles.metDot} />}
+            <Text style={styles.date}>{formatDateShort(entry.startedAt)}</Text>
+          </View>
+          <HistoryBar frac={frac} metTarget={metTarget} index={index} />
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 interface Props {
   entries: FastEntry[];
   /** Permanently remove the given entries from storage. */
@@ -58,17 +111,11 @@ interface Props {
 }
 
 /**
- * Fasting history: a pinned stats strip (count / average / best) above a
- * scrolling list of rows — the duration leads, an ember dot marks fasts that
- * hit their target, and a bar scales each fast against the longest on record.
- *
- * Tap a row to select it (accent left border + indent); the pinned "remove"
- * button below the list permanently deletes the selection.
+ * Fasting history: a pinned retention note above a scrolling list of rows,
+ * with the "remove selected" action pinned below the list.
  */
 export default function HistoryList({ entries, onDelete }: Props) {
   const maxMs = entries.reduce((m, e) => Math.max(m, e.endedAt - e.startedAt), 0);
-  const totalMs = entries.reduce((sum, e) => sum + (e.endedAt - e.startedAt), 0);
-  const avgMs = entries.length > 0 ? totalMs / entries.length : 0;
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -110,46 +157,27 @@ export default function HistoryList({ entries, onDelete }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Pinned stats strip */}
-      <View style={styles.stats}>
-        <View style={styles.stat}>
-          <Text style={styles.statValue}>{entries.length}</Text>
-          <Text style={styles.statLabel}>FASTS</Text>
-        </View>
-        <View style={styles.stat}>
-          <Text style={styles.statValue}>{formatDurationShort(avgMs)}</Text>
-          <Text style={styles.statLabel}>AVERAGE</Text>
-        </View>
-        <View style={styles.stat}>
-          <Text style={styles.statValue}>{formatDurationShort(maxMs)}</Text>
-          <Text style={styles.statLabel}>BEST</Text>
-        </View>
+      {/* Pinned header — just the retention note; stats over a rolling
+          30-fast window would be misleading. */}
+      <View style={styles.header}>
+        <Text style={styles.note}>Only the last {HISTORY_LIMIT} fasts are kept.</Text>
       </View>
 
       <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
         {entries.map((entry, i) => {
           const actualMs = entry.endedAt - entry.startedAt;
-          const frac = maxMs > 0 ? actualMs / maxMs : 0;
-          const metTarget = actualMs >= entry.targetHours * HOUR_MS;
-          const isSelected = selected.has(entry.id);
           return (
-            <Animated.View
+            <HistoryRow
               key={entry.id}
-              entering={FadeInDown.duration(220).delay(Math.min(i, STAGGER_LIMIT) * STAGGER_MS)}
-            >
-              <Pressable onPress={() => toggle(entry.id)} style={[styles.row, isSelected && styles.rowSelected]}>
-                <View style={styles.rowHeader}>
-                  <Text style={styles.duration}>{formatDurationShort(actualMs)}</Text>
-                  {metTarget && <View style={styles.metDot} />}
-                  <Text style={styles.date}>{formatDateShort(entry.startedAt)}</Text>
-                </View>
-                <HistoryBar frac={frac} metTarget={metTarget} index={i} />
-              </Pressable>
-            </Animated.View>
+              entry={entry}
+              index={i}
+              frac={maxMs > 0 ? actualMs / maxMs : 0}
+              metTarget={actualMs >= entry.targetHours * HOUR_MS}
+              selected={selected.has(entry.id)}
+              onToggle={toggle}
+            />
           );
         })}
-
-        <Text style={styles.note}>Only the last {HISTORY_LIMIT} fasts are kept.</Text>
       </ScrollView>
 
       {/* Pinned below the list so it never scrolls out of reach. */}
@@ -183,39 +211,32 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   emptyTitle: {
+    fontFamily: appFont,
     color: colors.textPrimary,
     fontSize: 15,
     fontWeight: '600',
   },
   emptyHint: {
+    fontFamily: appFont,
     color: colors.textSecondary,
     fontSize: 13,
     marginTop: 4,
   },
 
-  // Stats strip
-  stats: {
-    flexDirection: 'row',
-    paddingBottom: 16,
+  // Pinned header
+  header: {
+    paddingBottom: 12,
     marginBottom: 4,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(255,255,255,0.14)',
   },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statValue: {
-    color: colors.textPrimary,
-    fontSize: 17,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  statLabel: {
+  note: {
+    fontFamily: appFont,
     color: colors.textSecondary,
-    fontSize: 10,
-    letterSpacing: 1.5,
-    marginTop: 3,
+    opacity: 0.7,
+    fontSize: 11,
+    letterSpacing: 0.3,
+    textAlign: 'center',
   },
 
   // Rows
@@ -224,12 +245,8 @@ const styles = StyleSheet.create({
   },
   row: {
     paddingVertical: 10,
-  },
-  // Selection reads as an indented row pinned by an accent bar on the left.
-  rowSelected: {
-    borderLeftWidth: 3,
+    // Width/padding are animated from 0 on selection; only the color is static.
     borderLeftColor: colors.accent,
-    paddingLeft: 14,
   },
   rowHeader: {
     flexDirection: 'row',
@@ -237,6 +254,7 @@ const styles = StyleSheet.create({
     marginBottom: 7,
   },
   duration: {
+    fontFamily: appFont,
     color: colors.textPrimary,
     fontSize: 15,
     fontWeight: '600',
@@ -251,6 +269,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   date: {
+    fontFamily: appFont,
     color: colors.textSecondary,
     fontSize: 12,
     fontVariant: ['tabular-nums'],
@@ -271,14 +290,7 @@ const styles = StyleSheet.create({
   barFillShort: {
     backgroundColor: 'rgba(255,255,255,0.30)',
   },
-  note: {
-    color: colors.textSecondary,
-    opacity: 0.7,
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: 18,
-    marginBottom: 8,
-  },
+
   removeRow: {
     paddingTop: 14,
     alignItems: 'center',
@@ -286,6 +298,7 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(255,255,255,0.14)',
   },
   removeText: {
+    fontFamily: appFont,
     color: colors.danger,
     fontSize: 14,
     fontWeight: '700',

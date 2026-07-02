@@ -12,7 +12,7 @@ import Animated, {
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { colors } from '../theme';
+import { appFont, colors } from '../theme';
 
 // A celebratory burst shown when a fast is ended: confetti rains down while a
 // "Good job!" badge springs in, then the whole thing fades itself out.
@@ -179,12 +179,14 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   badgeTitle: {
+    fontFamily: appFont,
     fontSize: 26,
     fontWeight: '800',
     color: colors.accent,
     letterSpacing: 0.5,
   },
   badgeSubtitle: {
+    fontFamily: appFont,
     marginTop: 4,
     fontSize: 13,
     fontWeight: '600',
