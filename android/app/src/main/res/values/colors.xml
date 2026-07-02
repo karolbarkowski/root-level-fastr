@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches the App.tsx background (colors.bg in src/theme.ts). -->
+    <color name="splash_background">#2B2B2B</color>
+    <!-- Adaptive launcher icon tile, matching the legacy ic_launcher PNGs. -->
+    <color name="ic_launcher_background">#D8E1EA</color>
+</resources>

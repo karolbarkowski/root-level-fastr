@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(adb exec-out *)",
+      "PowerShell(Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\(\"d:\\\\Dev\\\\Projects\\\\FastR\\\\assets\\\\logo.png\"\\); \"$\\($img.Width\\)x$\\($img.Height\\)\"; $img.Dispose\\(\\))",
+      "Bash(npx tsc *)",
+      "Bash(adb shell *)",
+      "Bash(npm install *)",
+      "Bash(npm test *)",
+      "Bash(ls node_modules/@react-native/)",
+      "Bash(git stash *)",
+      "Bash(node -e \"console.log\\(require\\('./package.json'\\).devDependencies['@react-native/jest-preset'] || 'NOT in package.json devDeps'\\)\")",
+      "Bash(rm -f __tests__/App.test.tsx jest.config.js jest.setup.js)",
+      "Bash(rmdir __tests__)",
+      "Bash(ls __tests__)",
+      "Bash(ls jest.config.js jest.setup.js)",
+      "WebSearch",
+      "PowerShell(& \"D:\\\\AndroidSDK\\\\emulator\\\\emulator.exe\" -list-avds)",
+      "PowerShell(& \"D:\\\\AndroidSDK\\\\emulator\\\\emulator.exe\" -avd Pixel_10 -no-snapshot-save -no-boot-anim)",
+      "PowerShell(adb wait-for-device shell 'while [ \"$\\(getprop sys.boot_completed\\)\" != \"1\" ]; do sleep 1; done; echo booted')",
+      "PowerShell(\\(Get-Content \"d:\\\\Dev\\\\Projects\\\\FastR\\\\assets\\\\fastr-symbol.svg\" -Raw\\) -replace 'fill=\"#717986\"','fill=\"currentColor\"' | Set-Content \"d:\\\\Dev\\\\Projects\\\\FastR\\\\assets\\\\fastr-symbol.svg\" -NoNewline)",
+      "PowerShell(npm uninstall react-native-shadow-2)",
+      "WebFetch(domain:github.com)",
+      "PowerShell(npm view react-native-reanimated dist-tags --json)",
+      "PowerShell(npm view react-native-worklets dist-tags --json)",
+      "PowerShell(npm view react-native-reanimated@4.5.0 peerDependencies --json)",
+      "PowerShell(npm install react-native-reanimated@4.5.0 react-native-worklets@0.10.1)",
+      "PowerShell(npx react-native run-android --no-packager 2>&1)",
+      "PowerShell(& \"d:\\\\Dev\\\\Projects\\\\FastR\\\\android\\\\gradlew.bat\" -p \"d:\\\\Dev\\\\Projects\\\\FastR\\\\android\" app:installDebug -PreactNativeDevServerPort=8081 2>&1)",
+      "PowerShell(\"cleaned\")",
+      "PowerShell(Get-Content \"C:\\\\Users\\\\karol\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Dev-Projects-FastR\\\\53da6e16-3df0-483d-814b-9bd6a5981d59\\\\tasks\\\\bomrchga8.output\" | Select-String \"Installed|BUILD\" | Select-Object -Last 3; adb -s ad1ce0ca shell monkey -p com.fastr 1 2>$null | Out-Null; Start-Sleep -Seconds 4; $sp=\"C:\\\\Users\\\\karol\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Dev-Projects-FastR\\\\53da6e16-3df0-483d-814b-9bd6a5981d59\\\\scratchpad\"; adb -s ad1ce0ca exec-out screencap -p > \"$sp\\\\v45.png\"; \\(Get-Item \"$sp\\\\v45.png\"\\).Length)",
+      "PowerShell(Test-NetConnection -ComputerName localhost -Port 8081 -InformationLevel Quiet -WarningAction SilentlyContinue)",
+      "PowerShell(adb -s ad1ce0ca reverse tcp:8081 tcp:8081; adb -s ad1ce0ca shell input keyevent 82 2>$null; adb -s ad1ce0ca shell am force-stop com.fastr; adb -s ad1ce0ca shell monkey -p com.fastr 1 2>$null | Out-Null; Start-Sleep -Seconds 6; $sp=\"C:\\\\Users\\\\karol\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Dev-Projects-FastR\\\\53da6e16-3df0-483d-814b-9bd6a5981d59\\\\scratchpad\"; adb -s ad1ce0ca exec-out screencap -p > \"$sp\\\\v45b.png\"; \\(Get-Item \"$sp\\\\v45b.png\"\\).Length)",
+      "PowerShell(try { \\(Invoke-WebRequest -Uri \"http://localhost:8081/status\" -TimeoutSec 5\\).Content } catch { \"status check failed: $\\($_.Exception.Message\\)\" }; adb -s ad1ce0ca reverse --list)",
+      "PowerShell(npm start -- --no-interactive)"
+    ]
+  }
+}

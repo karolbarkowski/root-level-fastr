@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- triangle bullet -->
+  <path d="M19 5 L30.5 25 L7.5 25 Z"/>
+  <!-- square bullet -->
+  <rect x="8" y="40" width="22" height="22"/>
+  <!-- circle bullet -->
+  <circle cx="19" cy="85" r="11"/>
+  <!-- row 1 dashes -->
+  <path d="M44 16 H58 M70 16 H92"/>
+  <!-- row 2 dashes -->
+  <path d="M44 51 H64 M76 51 H92"/>
+  <!-- row 3 dashes -->
+  <path d="M44 85 H56 M68 85 H92"/>
+</svg>
