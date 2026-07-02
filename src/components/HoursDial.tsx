@@ -5,7 +5,7 @@ import React, { useEffect, useRef } from 'react';
 import { colors } from '../theme';
 
 interface Props {
-  /** Current hour value (0–99). */
+  /** Current hour value (1–99). */
   value: number;
   /** Called with the new clamped integer value while dragging. */
   onChange: (value: number) => void;
@@ -14,7 +14,8 @@ interface Props {
   disabled?: boolean;
 }
 
-const MIN = 0;
+// 1h floor: a 0-hour target makes the ring math divide by zero.
+const MIN = 1;
 const MAX = 99;
 const DEGREES_PER_HOUR = 30; // a full 360° turn = 12 hours, like a clock
 
@@ -134,7 +135,7 @@ function HoursDial({ value, onChange, size = 132, disabled = false }: Props) {
       <View style={[styles.disc, { borderRadius: radius }]}>
         {/* Rotating layer carrying the position dot */}
         <Animated.View style={[StyleSheet.absoluteFill, rotationStyle]}>
-          <View style={[styles.dot, { top: DOT_TOP, left: (size - DOT_SIZE) / 2 }]} />
+          {!disabled && <View style={[styles.dot, { top: DOT_TOP, left: (size - DOT_SIZE) / 2 }]} />}
         </Animated.View>
       </View>
     </Animated.View>

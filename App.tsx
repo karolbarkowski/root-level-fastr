@@ -83,9 +83,9 @@ function Main() {
   // so dial input can't rescale a fast in progress.
   const ringHours = activeFast?.targetHours ?? targetHours;
 
-  // The drag dial spans its own 0–99 range, independent of the stepper bounds.
+  // The drag dial spans its own 1–99 range, independent of the stepper bounds.
   const setHoursFromDial = useCallback((h: number) => {
-    setTargetHours(Math.max(0, Math.min(99, h)));
+    setTargetHours(Math.max(1, Math.min(99, h)));
   }, []);
 
   const startFast = useCallback(() => {
