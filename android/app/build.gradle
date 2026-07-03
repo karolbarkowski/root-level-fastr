@@ -93,9 +93,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.fastr"
+    namespace "rootlevel.it.fastr"
     defaultConfig {
-        applicationId "com.fastr"
+        applicationId "rootlevel.it.fastr"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

@@ -1,4 +1,4 @@
-package com.fastr
+package rootlevel.it.fastr
 
 import android.app.Application
 import com.facebook.react.PackageList
