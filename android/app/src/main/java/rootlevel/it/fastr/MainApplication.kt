@@ -17,6 +17,10 @@ class MainApplication : Application(), ReactApplication {
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // add(MyReactNativePackage())
         },
+      // Tie dev support to THIS app's build type. The default relies on the
+      // react-android library's BuildConfig.DEBUG, which resolves to false here
+      // and makes debug builds load the JS from assets instead of Metro.
+      useDevSupport = BuildConfig.DEBUG,
     )
   }
 

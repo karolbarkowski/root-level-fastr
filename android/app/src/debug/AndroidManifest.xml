@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Debug-only: allow the app to reach the Metro dev server (localhost:8081).
+         The production/release app intentionally ships with NO internet permission. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+</manifest>
