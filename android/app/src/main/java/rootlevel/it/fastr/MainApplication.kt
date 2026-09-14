@@ -14,8 +14,7 @@ class MainApplication : Application(), ReactApplication {
       context = applicationContext,
       packageList =
         PackageList(this).packages.apply {
-          // Packages that cannot be autolinked yet can be added manually here, for example:
-          // add(MyReactNativePackage())
+          add(rootlevel.it.fastr.widget.FastWidgetPackage())
         },
       // Tie dev support to THIS app's build type. The default relies on the
       // react-android library's BuildConfig.DEBUG, which resolves to false here

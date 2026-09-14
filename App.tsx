@@ -24,6 +24,7 @@ import { appFont, colors } from './src/theme';
 import { clearActiveFast, loadActiveFast, loadHistory, saveActiveFast, saveHistory } from './src/utils/storage';
 import { formatDurationShort, formatElapsed } from './src/utils/format';
 import { formatClock, formatDay, formatEndTime, nextEndTime, startOfDay, timeOnDay } from './src/utils/time';
+import { syncFastWidget } from './src/utils/widget';
 
 import Coffee from './src/components/side-panels/Coffee';
 import EndTimeSheet, { EndTimeSelection } from './src/components/EndTimeSheet';
@@ -86,6 +87,11 @@ function Main() {
   const [ready, setReady] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [openPanel, setOpenPanel] = useState<PanelKey | null>(null);
+  useEffect(() => {
+    if (ready) {
+      syncFastWidget(activeFast);
+    }
+  }, [activeFast, ready]);
   useEffect(() => {
     (async () => {
       const [active, entries] = await Promise.all([loadActiveFast(), loadHistory()]);

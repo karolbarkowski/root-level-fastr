@@ -1,0 +1,9 @@
+<resources>
+    <string name="widget_name">FastR progress</string>
+    <string name="widget_description">Follow your fast from your home screen.</string>
+    <string name="widget_idle">No active fast</string>
+    <string name="widget_start_hint">Tap to plan your next fast</string>
+    <string name="widget_target">%1$d%% · %2$s</string>
+    <string name="widget_finish">Ends %1$s</string>
+    <string name="widget_reached">Target reached</string>
+</resources>
