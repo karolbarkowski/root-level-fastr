@@ -24,7 +24,9 @@ export default function HistoryList({
   const met = entries.filter(entry => duration(entry) >= entry.targetHours * HOUR_MS).length;
   const chartEntries = [...entries].reverse();
   const maxHours = Math.max(4, Math.ceil(Math.max(...entries.map(entry => duration(entry) / HOUR_MS), 0) / 4) * 4);
-  const step = 280 / Math.max(chartEntries.length, 1);
+  // Bars sit side by side in order (no time axis); they shrink only when there are too many to fit.
+  const barGap = 3;
+  const barWidth = Math.min(20, (280 + barGap) / Math.max(chartEntries.length, 1) - barGap);
   const toggle = (id: string) =>
     setSelected(previous => {
       const next = new Set(previous);
@@ -94,7 +96,7 @@ export default function HistoryList({
               entries.length
             } fasts. Longest duration ${formatDurationShort(
               Math.max(...entries.map(duration)),
-            )}. Orange bars indicate targets met.`}
+            )}.`}
           >
             <View style={styles.chartHeading}>
               <Text style={styles.chartTitle}>Time, over time</Text>
@@ -121,32 +123,19 @@ export default function HistoryList({
                 ))}
                 {chartEntries.map((entry, index) => {
                   const barHeight = Math.max(2, (duration(entry) / HOUR_MS / maxHours) * 112);
-                  const barWidth = Math.min(20, step * 0.6);
                   return (
                     <Rect
                       key={entry.id}
-                      x={index * step + (step - barWidth) / 2}
+                      x={index * (barWidth + barGap)}
                       y={116 - barHeight}
                       width={barWidth}
                       height={barHeight}
                       rx={Math.min(3, barWidth / 2)}
-                      fill={duration(entry) >= entry.targetHours * HOUR_MS ? colors.accent : '#89817B'}
+                      fill={colors.accent}
                     />
                   );
                 })}
               </Svg>
-            </View>
-            <View style={styles.chartDates}>
-              <Text style={styles.small}>{formatDateShort(chartEntries[0].startedAt)}</Text>
-              <Text style={styles.small}>
-                {entries.length > 1 ? formatDateShort(entries[0].startedAt) : 'Latest fast'}
-              </Text>
-            </View>
-            <View style={styles.legend}>
-              <View style={styles.dot} />
-              <Text style={styles.small}>Target met</Text>
-              <View style={[styles.dot, styles.mutedDot]} />
-              <Text style={styles.small}>Ended earlier</Text>
             </View>
           </View>
           <View style={styles.listHeading}>
@@ -155,7 +144,6 @@ export default function HistoryList({
           </View>
           {entries.map(entry => {
             const actual = duration(entry);
-            const targetMet = actual >= entry.targetHours * HOUR_MS;
             return (
               <Pressable
                 key={entry.id}
@@ -181,10 +169,6 @@ export default function HistoryList({
                       ? `${formatDateShort(entry.endedAt)}, `
                       : ''}
                     {formatClock(entry.endedAt)}
-                  </Text>
-                  <Text style={[styles.status, targetMet && styles.orange]}>
-                    {targetMet ? 'Target met' : 'Ended earlier'} · {formatDurationShort(entry.targetHours * HOUR_MS)}{' '}
-                    goal
                   </Text>
                 </View>
                 <Text style={styles.duration}>{formatDurationShort(actual)}</Text>
@@ -243,10 +227,6 @@ const styles = StyleSheet.create({
   axis: { justifyContent: 'space-between', width: 26, paddingBottom: 2 },
   axisText: { color: colors.textSecondary, fontSize: 9 },
   chart: { flex: 1 },
-  chartDates: { flexDirection: 'row', justifyContent: 'space-between', marginLeft: 34, marginTop: 6 },
-  legend: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 16 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.accent },
-  mutedDot: { backgroundColor: '#89817B', marginLeft: 10 },
   listHeading: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   row: {
     flexDirection: 'row',
@@ -259,8 +239,6 @@ const styles = StyleSheet.create({
   rowMain: { flex: 1, gap: 4 },
   date: { color: colors.textPrimary, fontSize: 14, fontWeight: '500' },
   year: { color: colors.textSecondary, fontSize: 11, fontWeight: '400' },
-  status: { color: colors.textSecondary, fontSize: 10 },
-  orange: { color: colors.accent },
   duration: {
     color: colors.textPrimary,
     fontSize: 20,
