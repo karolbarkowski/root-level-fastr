@@ -15,6 +15,7 @@ class MainApplication : Application(), ReactApplication {
       packageList =
         PackageList(this).packages.apply {
           add(rootlevel.it.fastr.widget.FastWidgetPackage())
+          add(rootlevel.it.fastr.billing.DonationPackage())
         },
       // Tie dev support to THIS app's build type. The default relies on the
       // react-android library's BuildConfig.DEBUG, which resolves to false here

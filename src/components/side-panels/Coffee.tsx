@@ -1,17 +1,53 @@
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { DonationProduct, loadDonationProducts, purchaseDonation } from '../../utils/donations';
+import React, { useEffect, useState } from 'react';
 import { appFont, colors } from '../../theme';
 
-import { BUY_ME_A_COFFEE_URL } from '../../config';
 import CoffeeIcon from '../../../assets/icons/coffee.svg';
-import React from 'react';
+import { DONATION_TIERS } from '../../config';
 
 const ICON_SIZE = 44;
 
+type Status = { kind: 'loading' } | { kind: 'ready' } | { kind: 'unavailable' };
+
 export default function Coffee() {
-  // Pressing scales the button down briefly so the tap reads as physical.
-  const scale = useSharedValue(1);
-  const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const [products, setProducts] = useState<DonationProduct[]>([]);
+  const [status, setStatus] = useState<Status>({ kind: 'loading' });
+  const [buying, setBuying] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    loadDonationProducts(DONATION_TIERS.map(tier => tier.productId))
+      .then(list => {
+        if (alive) {
+          setProducts(list);
+          setStatus({ kind: list.length ? 'ready' : 'unavailable' });
+        }
+      })
+      .catch(() => alive && setStatus({ kind: 'unavailable' }));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const buy = async (productId: string) => {
+    setBuying(productId);
+    setMessage(null);
+    try {
+      const outcome = await purchaseDonation(productId);
+      if (outcome === 'purchased') {
+        setMessage('Thank you so much! ☕');
+      } else if (outcome === 'pending') {
+        setMessage('Thanks! Your payment is pending and will go through once it completes.');
+      }
+    } catch {
+      setMessage('Something went wrong with the payment. Please try again.');
+    } finally {
+      setBuying(null);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -32,23 +68,52 @@ export default function Coffee() {
       </View>
 
       <View style={styles.buttonWrap}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => Linking.openURL(BUY_ME_A_COFFEE_URL).catch(() => {})}
-          hitSlop={12}
-          onPressIn={() => {
-            scale.value = withTiming(0.92, { duration: 80 });
-          }}
-          onPressOut={() => {
-            scale.value = withTiming(1, { duration: 120 });
-          }}
-        >
-          <Animated.View style={[styles.button, pressStyle]}>
-            <Text style={styles.buttonLabel}>Buy me a coffee</Text>
-          </Animated.View>
-        </Pressable>
+        {status.kind === 'loading' && <ActivityIndicator color={colors.accent} />}
+        {status.kind === 'unavailable' && <Text style={styles.body}>Tips aren't available on this device right now.</Text>}
+        {status.kind === 'ready' &&
+          products.map(product => (
+            <TipButton
+              key={product.id}
+              label={DONATION_TIERS.find(tier => tier.productId === product.id)?.label ?? product.id}
+              price={product.price}
+              busy={buying === product.id}
+              disabled={buying !== null}
+              onPress={() => buy(product.id)}
+            />
+          ))}
+        {message && <Text style={[styles.body, styles.message]}>{message}</Text>}
       </View>
     </View>
+  );
+}
+
+type TipButtonProps = { label: string; price: string; busy: boolean; disabled: boolean; onPress: () => void };
+
+function TipButton({ label, price, busy, disabled, onPress }: TipButtonProps) {
+  // Pressing scales the button down briefly so the tap reads as physical.
+  const scale = useSharedValue(1);
+  const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${label}, ${price}`}
+      accessibilityState={{ disabled, busy }}
+      disabled={disabled}
+      onPress={onPress}
+      hitSlop={6}
+      onPressIn={() => {
+        scale.value = withTiming(0.92, { duration: 80 });
+      }}
+      onPressOut={() => {
+        scale.value = withTiming(1, { duration: 120 });
+      }}
+    >
+      <Animated.View style={[styles.button, disabled && !busy && styles.buttonDimmed, pressStyle]}>
+        <Text style={styles.buttonLabel}>{label}</Text>
+        {busy ? <ActivityIndicator color={colors.accent} /> : <Text style={styles.buttonPrice}>{price}</Text>}
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -77,21 +142,38 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
   },
+  message: {
+    marginTop: 4,
+    color: colors.textPrimary,
+  },
   buttonWrap: {
-    alignItems: 'center',
+    alignItems: 'stretch',
     marginTop: 12,
+    gap: 10,
   },
   button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     borderRadius: 22,
     borderWidth: 1,
     borderColor: colors.outline,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+  },
+  buttonDimmed: {
+    opacity: 0.5,
   },
   buttonLabel: {
     fontFamily: appFont,
     fontSize: 15,
     fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  buttonPrice: {
+    fontFamily: appFont,
+    fontSize: 15,
+    fontWeight: '700',
     color: colors.accent,
-    paddingVertical: 14,
-    paddingHorizontal: 28,
   },
 });

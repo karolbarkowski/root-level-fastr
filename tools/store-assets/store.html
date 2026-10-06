@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>fastr store images</title>
+<style>
+  @font-face { font-family: Smooch; font-weight: 300; src: url('../../assets/fonts/SmoochSans-300.ttf'); }
+  @font-face { font-family: Smooch; font-weight: 400; src: url('../../assets/fonts/SmoochSans-400.ttf'); }
+  :root { --bg: #1c1a19; --lift: #262321; --text: #EEEAE5; --muted: #A39B94; --outline: #45403C; --accent: #F58B4D; }
+  html, body { margin: 0; overflow: hidden; background: var(--bg); color: var(--text); font-family: Roboto, 'Segoe UI', sans-serif; }
+  .canvas { position: relative; overflow: hidden;
+            background: radial-gradient(ellipse 75% 55% at 50% 62%, var(--lift) 0%, var(--bg) 72%); }
+
+  /* Shared header */
+  .logo { display: flex; align-items: center; justify-content: center; gap: 18px; }
+  .logo .sym { width: 82px; height: 64px; }
+  .logo .word { height: 60px; }
+  .slogan { display: flex; justify-content: center; align-items: center; gap: 22px; font-size: 21px; letter-spacing: 7px; color: var(--muted); }
+  .slogan i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: block; }
+
+  /* Phone */
+  .phone { position: absolute; box-sizing: border-box; background: #121110; border: 2px solid var(--outline);
+           box-shadow: 0 40px 90px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.03); }
+  .phone .screen { width: 100%; height: 100%; overflow: hidden; position: relative; background: #262422; }
+  .phone img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: top; }
+  .phone .cam { position: absolute; left: 50%; border-radius: 50%; background: #0b0a0a; }
+
+  /* ---- Portrait store screenshot, 1080 x 1920 ---- */
+  .shot { width: 1080px; height: 1920px; }
+  .shot .header { position: absolute; top: 96px; left: 0; right: 0; }
+  .shot .slogan { margin-top: 30px; }
+  .shot h1 { position: absolute; top: 300px; left: 0; right: 0; margin: 0; text-align: center;
+             font-family: Smooch; font-weight: 300; font-size: 124px; line-height: 1; letter-spacing: -1px; }
+  .shot h1 em { font-style: normal; color: var(--accent); }
+  .shot .sub { position: absolute; top: 452px; left: 0; right: 0; text-align: center; font-size: 34px; font-weight: 300; color: var(--muted); }
+  .shot .phone { left: 50%; top: 566px; width: 596px; height: 1303px; margin-left: -298px; border-radius: 78px; padding: 14px; }
+  .shot .phone .screen { border-radius: 64px; }
+  .shot .phone .cam { top: 22px; width: 20px; height: 20px; margin-left: -10px; }
+
+  /* ---- Feature graphic, 1024 x 500 ---- */
+  .feature { width: 1024px; height: 500px;
+             background: radial-gradient(ellipse 55% 90% at 72% 60%, var(--lift) 0%, var(--bg) 75%); }
+  .feature .header { position: absolute; left: 80px; top: 50%; transform: translateY(-50%); width: 400px; }
+  .feature .logo { justify-content: flex-start; gap: 14px; }
+  .feature .logo .sym { width: 72px; height: 56px; }
+  .feature .logo .word { height: 54px; }
+  .feature .slogan { justify-content: flex-start; margin-top: 26px; font-size: 13px; letter-spacing: 4.5px; gap: 12px; }
+  .feature .slogan i { width: 4px; height: 4px; }
+  .feature .rule { width: 56px; height: 2px; background: var(--accent); margin-top: 28px; }
+  .feature .phone { width: 198px; height: 444px; border-radius: 30px; padding: 6px; }
+  .feature .phone .screen { border-radius: 24px; }
+  .feature .phone .cam { top: 9px; width: 8px; height: 8px; margin-left: -4px; }
+  .feature .phone.side { width: 176px; height: 395px; border-radius: 27px; padding: 5px; filter: brightness(.72); }
+  .feature .phone.side .screen { border-radius: 22px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const ROOT = '../../assets/';
+  const SHOTS = {
+    1: { img: '1.png', head: 'Super <em>simple.</em>', sub: 'Choose a duration or end time, then start.' },
+    2: { img: '2.png', head: 'No <em>ads.</em>', sub: 'A focused fasting app, without distractions.' },
+    3: { img: '3.png', head: 'Works <em>offline.</em>', sub: 'Your fasting journal is always with you.' },
+    4: { img: '4.png', head: 'No account <em>needed.</em>', sub: 'Open the app and start fasting right away.' },
+  };
+  const symbol = `<svg class="sym" viewBox="0 0 256 200">
+    <path fill="#F58B4D" d="M128 8 C104 27 95 55 108 81 C117 100 125 125 128 149 C131 125 139 100 148 81 C161 55 152 27 128 8Z"/>
+    <path fill="#EEEAE5" d="M43 54 C78 53 101 88 119 169 C100 144 58 121 47 96 C42 83 40 68 43 54Z"/>
+    <path fill="#EEEAE5" d="M213 54 C178 53 155 88 137 169 C156 144 198 121 209 96 C214 83 216 68 213 54Z"/>
+    <path fill="#EEEAE5" d="M8 111 C49 100 88 130 115 183 C74 194 28 177 8 111Z"/>
+    <path fill="#EEEAE5" d="M248 111 C207 100 168 130 141 183 C182 194 228 177 248 111Z"/></svg>`;
+  const header = `<div class="header">
+      <div class="logo">${symbol}<img class="word" src="${ROOT}fastr-wordmark.svg" alt=""></div>
+      <div class="slogan"><span>HEALTHIER</span><i></i><span>HAPPIER</span><i></i><span>STRONGER YOU</span></div>
+      ${'__RULE__'}
+    </div>`;
+  const phone = (img, cls = '', style = '') =>
+    `<div class="phone ${cls}" style="${style}"><div class="screen"><img src="${ROOT}play-store-images/${img}" alt=""><div class="cam"></div></div></div>`;
+
+  const params = new URLSearchParams(location.search);
+  const which = params.get('shot');
+  const root = document.getElementById('root');
+  if (which === 'main') {
+    root.innerHTML = `<div class="canvas feature">
+      ${header.replace('__RULE__', '<div class="rule"></div>')}
+      ${phone('1.png', 'side', 'left: 520px; top: 105px;')}
+      ${phone('3.png', 'side', 'left: 824px; top: 105px;')}
+      ${phone('2.png', '', 'left: 663px; top: 56px;')}
+    </div>`;
+  } else {
+    const s = SHOTS[which];
+    root.innerHTML = `<div class="canvas shot">
+      ${header.replace('__RULE__', '')}
+      <h1>${s.head}</h1>
+      <div class="sub">${s.sub}</div>
+      ${phone(s.img)}
+    </div>`;
+  }
+</script>
+</body>
+</html>

@@ -13,7 +13,8 @@
     "bundle-release": "cd android && .\\gradlew.bat bundleRelease",
     "install-release": "cd android && .\\gradlew.bat installRelease",
     "sign-release": "keytool -genkeypair -v -storetype PKCS12 -keystore android/app/fastr-prod.keystore -alias fastr-prod -keyalg RSA -keysize 2048 -validity 10000",
-    "branding": "node scripts/generate-branding.cjs"
+    "branding": "node scripts/generate-branding.cjs",
+    "donation-icons": "node scripts/generate-donation-icons.cjs"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^3.1.1",

@@ -35,4 +35,9 @@ export const MINUTE_STEP = 5;
 export const RING_MAX_SIZE = 420;
 /** Shared length of mode-switch transitions (panel slide, dial dot, milestone icons). */
 export const MODE_TRANSITION_MS = 280;
-export const BUY_ME_A_COFFEE_URL = 'https://buymeacoffee.com/rootlevelit';
+/** Consumable Play in-app products (create them in Play Console > Monetize > In-app products). */
+export const DONATION_TIERS = [
+  { productId: 'coffee_small', label: 'Espresso' },
+  { productId: 'coffee_medium', label: 'Cappuccino' },
+  { productId: 'coffee_large', label: 'Coffee & cake' },
+];

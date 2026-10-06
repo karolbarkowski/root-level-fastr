@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>fastr promo</title>
+<style>
+  :root { --bg: #262422; --text: #EEEAE5; --muted: #ABA39C; --outline: #4C4742; --accent: #F58B4D; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+  body { font-family: Roboto, 'Segoe UI', sans-serif; color: var(--text); }
+  .stage { position: absolute; inset: 0; background: radial-gradient(ellipse 60% 75% at 50% 45%, #302d2a 0%, var(--bg) 70%); }
+  .abs { position: absolute; will-change: transform, opacity; }
+
+  /* Device, centred, in a 3D scene */
+  #scene { left: 0; top: 0; width: 1920px; height: 1080px; perspective: 2600px; perspective-origin: 50% 45%; }
+  #shadow { left: 50%; top: 985px; width: 460px; height: 70px; margin-left: -230px; border-radius: 50%;
+            background: radial-gradient(ellipse at center, rgba(0,0,0,.45) 0%, rgba(0,0,0,0) 70%); filter: blur(10px); }
+  #device { left: 50%; top: 50%; width: 492px; height: 970px; margin: -505px 0 0 -246px; transform-style: preserve-3d; }
+  .body { position: absolute; inset: 0; border-radius: 66px; box-sizing: border-box; }
+  /* Back plate a few px behind the front: reads as the phone's edge once it turns. */
+  #edge { background: linear-gradient(90deg, #0d0c0c, #1c1a19 50%, #0d0c0c); transform: translateZ(-12px); }
+  #front { background: #151413; border: 1.5px solid var(--outline); padding: 11px; }
+  #screen { width: 470px; height: 948px; border-radius: 55px; overflow: hidden; position: relative; background: #262422; }
+  #screen img { width: 470px; height: 948px; display: block; }
+  #camera { position: absolute; left: 50%; top: 13px; width: 13px; height: 13px; margin-left: -6.5px; border-radius: 50%; background: #0c0b0b; }
+  #sheen { position: absolute; inset: 0; border-radius: 55px; pointer-events: none; mix-blend-mode: screen;
+           background: linear-gradient(115deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.05) 45%, rgba(255,255,255,0) 60%);
+           background-size: 300% 100%; }
+
+  /* Closing lockup */
+  #lockup { left: 50%; top: 50%; width: 470px; height: 120px; margin: -100px 0 0 -235px; }
+  #symbol { position: absolute; left: 0; top: 0; width: 154px; height: 120px; overflow: visible; }
+  #symbol path { transform-box: view-box; transform-origin: 128px 183px; }
+  #word { position: absolute; left: 182px; top: 8px; height: 110px; }
+  #tagline { left: 0; right: 0; top: 602px; text-align: center; font-size: 22px; letter-spacing: 11px; padding-left: 11px; color: var(--muted); }
+  #rule { left: 50%; top: 664px; width: 120px; height: 2px; margin-left: -60px; background: var(--accent); }
+</style>
+</head>
+<body>
+<div class="stage"></div>
+
+<div id="scene" class="abs">
+  <div id="shadow" class="abs"></div>
+  <div id="device" class="abs">
+    <div id="edge" class="body"></div>
+    <div id="front" class="body">
+      <div id="screen"><img id="frame" alt=""><div id="camera"></div><div id="sheen"></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="lockup" class="abs">
+  <svg id="symbol" viewBox="0 0 256 200">
+    <path id="p0" fill="#F58B4D" d="M128 8 C104 27 95 55 108 81 C117 100 125 125 128 149 C131 125 139 100 148 81 C161 55 152 27 128 8Z"/>
+    <path id="p1" fill="#EEEAE5" d="M43 54 C78 53 101 88 119 169 C100 144 58 121 47 96 C42 83 40 68 43 54Z"/>
+    <path id="p2" fill="#EEEAE5" d="M213 54 C178 53 155 88 137 169 C156 144 198 121 209 96 C214 83 216 68 213 54Z"/>
+    <path id="p3" fill="#EEEAE5" d="M8 111 C49 100 88 130 115 183 C74 194 28 177 8 111Z"/>
+    <path id="p4" fill="#EEEAE5" d="M248 111 C207 100 168 130 141 183 C182 194 228 177 248 111Z"/>
+  </svg>
+  <img id="word" src="../../assets/fastr-wordmark.svg" alt="">
+</div>
+<div id="tagline" class="abs">FASTING FOR A BRIGHTER YOU</div>
+<div id="rule" class="abs"></div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const clamp = v => Math.min(1, Math.max(0, v));
+  const span = (t, a, b) => clamp((t - a) / (b - a));
+  const out3 = x => 1 - Math.pow(1 - x, 3);
+  const inOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  const sine = x => 0.5 - Math.cos(Math.PI * x) / 2;
+  const set = (el, o, tf = '') => { el.style.opacity = o; el.style.transform = tf; };
+
+  const FRAMES_DIR = 'build/screen/';
+  const FRAME_COUNT = 259;
+  const CLIP_AT = 0.8;          // recording starts inside the phone
+  const LEAVE_AT = CLIP_AT + FRAME_COUNT / 30 + 0.15;
+  const END_AT = LEAVE_AT + 0.45; // closing logo scene
+  window.DURATION = END_AT + 4.4;
+
+  // Device poses [time, rotateY, rotateX]; sine-eased between them so it never stops dead mid-shot.
+  // Each beat of the recording gets its own gentle angle: entry, dial, history.
+  const POSES = [
+    [0.0, -16, 7],
+    [1.4, -9, 4],
+    [3.6, -5, 3],
+    [5.4, 9, 2],    // dial drag: turn towards the handle side
+    [7.2, -6, -1],  // history slides in from the right: open up to it
+    [9.4, 2, 1],
+    [11.0, 10, 3],
+  ];
+  const pose = t => {
+    for (let i = 0; i < POSES.length - 1; i++) {
+      const [t0, y0, x0] = POSES[i], [t1, y1, x1] = POSES[i + 1];
+      if (t <= t1) {
+        const k = sine(span(t, t0, t1));
+        return [y0 + (y1 - y0) * k, x0 + (x1 - x0) * k];
+      }
+    }
+    return POSES[POSES.length - 1].slice(1);
+  };
+
+  window.render = async t => {
+    const [ry, rx] = pose(t);
+    const rise = out3(span(t, 0.1, 1.3));
+    const leave = inOut(span(t, LEAVE_AT, END_AT));
+    const y = (1 - rise) * 70 - leave * 18;
+    const s = 0.96 + rise * 0.04 - leave * 0.04;
+    set($('device'), rise * (1 - leave), `translateY(${y}px) rotateX(${rx}deg) rotateY(${ry}deg) scale(${s})`);
+    // Shadow slides opposite the turn; sheen sweeps with it.
+    set($('shadow'), rise * (1 - leave) * 0.9, `translateX(${-ry * 4}px) scaleX(${1 - Math.abs(ry) / 60})`);
+    $('sheen').style.backgroundPosition = `${50 + ry * 3.5}% 0`;
+
+    const index = Math.min(FRAME_COUNT, Math.max(1, Math.floor((t - CLIP_AT) * 30) + 1));
+    const src = FRAMES_DIR + String(index).padStart(4, '0') + '.jpg';
+    const img = $('frame');
+    if (!img.src.endsWith(src)) {
+      img.src = src;
+      await img.decode().catch(() => {});
+    }
+
+    // Closing: petals open, wordmark slides out, tagline and hairline.
+    const e = t - END_AT;
+    const petal = (id, start, rot, lift) => {
+      const p = out3(span(e, start, start + 1.0));
+      set($(id), p, `translateY(${(1 - p) * lift}px) rotate(${(1 - p) * rot}deg)`);
+    };
+    petal('p0', 0.15, 0, 18);
+    petal('p1', 0.45, 22, 6);  petal('p2', 0.45, -22, 6);
+    petal('p3', 0.70, 30, 6);  petal('p4', 0.70, -30, 6);
+    const slide = inOut(span(e, 1.45, 2.35));
+    $('symbol').style.transform = `translateX(${(1 - slide) * 158}px)`;
+    const word = out3(span(e, 1.6, 2.45));
+    $('word').style.opacity = word;
+    $('word').style.clipPath = `inset(0 ${(1 - word) * 100}% 0 0)`;
+    $('word').style.transform = `translateX(${(1 - word) * -14}px)`;
+    const tag = out3(span(e, 2.3, 3.0));
+    set($('tagline'), tag, `translateY(${(1 - tag) * 10}px)`);
+    set($('rule'), 1, `scaleX(${inOut(span(e, 2.5, 3.2))})`);
+
+    document.body.style.filter = `brightness(${Math.min(span(t, 0, 0.4), 1 - span(t, window.DURATION - 0.35, window.DURATION))})`;
+  };
+</script>
+</body>
+</html>
